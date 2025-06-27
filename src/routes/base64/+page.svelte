@@ -30,7 +30,7 @@
 	});
 </script>
 
-<div class=" mx-auto p-4 space-y-6 h-full">
+<div class=" h-full">
 	<div class="flex items-center justify-between mb-6">
 		<h1 class="text-3xl font-bold">Base64 Converter</h1>
 		<Button variant="outline" onclick={() => (isEncoding = !isEncoding)}>

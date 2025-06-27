@@ -93,7 +93,7 @@
 	}
 </script>
 
-<div class="container mx-auto p-4 space-y-6">
+<div class="p-4 space-y-6">
 	<h1 class="text-3xl font-bold mb-6">Cookie Comparison Tool</h1>
 
 	<div class="grid grid-cols-1 md:grid-cols-2 gap-4">

@@ -17,8 +17,8 @@
 		</p>
 	</div>
 
-	<div class="grid place-items-center">
-		<Card class="w-full max-w-md">
+	<div class="flex flex-row gap-4 justify-center">
+		<Card class="w-full max-w-md h-auto justify-between">
 			<CardHeader>
 				<CardTitle>Cookie Comparison Tool</CardTitle>
 				<CardDescription>
@@ -29,6 +29,19 @@
 			<CardContent>
 				<Button variant="default" class="w-full">
 					<a href="/cookies" class="w-full">Launch Tool</a>
+				</Button>
+			</CardContent>
+		</Card>
+		<Card class="w-full max-w-md h-auto justify-between">
+			<CardHeader>
+				<CardTitle>Base64 Decoding/Encoding Tool</CardTitle>
+				<CardDescription>
+					Decode Base64 to plain text and vice versa
+				</CardDescription>
+			</CardHeader>
+			<CardContent>
+				<Button variant="default" class="w-full">
+					<a href="/base64" class="w-full">Launch Tool</a>
 				</Button>
 			</CardContent>
 		</Card>
