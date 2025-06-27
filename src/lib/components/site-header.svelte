@@ -15,6 +15,7 @@
 		SunIcon,
 		MoonIcon,
 	} from "@lucide/svelte";
+	import CommandMenu from "./command-menu.svelte";
 
 	const sidebar = Sidebar.useSidebar();
 
@@ -28,19 +29,24 @@
 <header
 	class="bg-background sticky top-0 z-50 flex w-full items-center border-b"
 >
-	<div class="h-(--header-height) flex w-full items-center gap-2 px-4 md:pl-2">
-		<Button
-			class="size-8 md:px-6"
-			variant="ghost"
-			size="icon"
-			onclick={sidebar.toggle}
-		>
-			<SidebarIcon />
-		</Button>
-		<Separator orientation="vertical" class="mr-2 h-4" />
-		<Breadcrumbs />
-		<div class="flex-1 flex items-center gap-2">
-			<SearchForm class="w-full sm:ml-auto sm:w-auto" />
+	<div
+		class="h-(--header-height) flex w-full items-center gap-2 px-4 md:pl-2 justify-between"
+	>
+		<div class="flex items-center gap-2">
+			<Button
+				class="size-8 md:px-6"
+				variant="ghost"
+				size="icon"
+				onclick={sidebar.toggle}
+			>
+				<SidebarIcon />
+			</Button>
+			<Separator orientation="vertical" class="mr-2 h-4" />
+			<Breadcrumbs />
+		</div>
+		<div class="flex-1 flex items-center gap-2 justify-end">
+			<!-- <SearchForm class="w-full sm:ml-auto sm:w-auto" /> -->
+			<CommandMenu />
 
 			<DropdownMenu.Root>
 				<DropdownMenu.Trigger>
