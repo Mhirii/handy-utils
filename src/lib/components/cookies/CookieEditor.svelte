@@ -130,91 +130,92 @@
 </script>
 
 <Dialog bind:open>
-  <DialogTrigger >
+  <DialogTrigger>
     <slot name="trigger">
       <Button variant="ghost" onclick={openEditor}>
         <PenIcon />
       </Button>
     </slot>
   </DialogTrigger>
-  <DialogContent class="max-w-2xl w-full p-0">
+  <DialogContent class="max-w-5xl w-full p-0 rounded-2xl shadow-xl border border-muted bg-gradient-to-br from-white via-gray-50 to-gray-100 dark:from-card dark:via-muted dark:to-card">
     <form on:submit|preventDefault={save}>
-      <div class="p-6 space-y-4">
-        <DialogTitle>Edit Cookie</DialogTitle>
-        <DialogDescription>
-          Edit, add, or remove key-value pairs. You can also copy values from the other cookie.
-        </DialogDescription>
-        <ScrollArea class="max-h-[50vh]">
-          <table class="w-full text-sm border-separate border-spacing-y-2">
-            <thead>
-              <tr>
-                <th class="text-left px-2 py-1">Key</th>
-                <th class="text-left px-2 py-1">Value</th>
-                <th class="px-2 py-1"></th>
-              </tr>
-            </thead>
-            <tbody>
-              {#each pairs as pair, idx}
-                <tr class="bg-muted rounded">
-                  <td class="px-2 py-1">
-                    <Input
-                      class="w-full"
-                      value={pair.key}
-                      oninput={(e) => updatePair(idx, "key", e.target.value)}
-                      placeholder="Key"
-                    />
-                  </td>
-                  <td class="px-2 py-1 flex items-center gap-1">
-                    <Input
-                      class="w-full"
-                      value={pair.value}
-                      oninput={(e) => updatePair(idx, "value", e.target.value)}
-                      placeholder="Value"
-                    />
+      <div class="p-0 sm:p-8 space-y-7">
+        <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 border-b pb-4 mb-4">
+          <DialogTitle class="text-2xl font-bold tracking-tight flex-1 text-primary">Edit Cookie</DialogTitle>
+          <DialogDescription class="text-base text-muted-foreground flex-1">
+            <span class="block">Edit, add, or remove key-value pairs.</span>
+            <span class="inline-block mt-1">You can also copy values from the other cookie.</span>
+          </DialogDescription>
+        </div>
+        <ScrollArea class="max-h-[50vh] overflow-auto rounded-xl border bg-background p-2">
+          <div class="flex flex-col gap-2">
+            <div class="hidden sm:grid grid-cols-[2fr_4fr_auto] gap-2 px-2 pb-1 text-xs font-semibold text-muted-foreground">
+              <div>Key</div>
+              <div>Value</div>
+              <div class="justify-self-end"></div>
+            </div>
+            {#each pairs as pair, idx}
+              <div class="grid grid-cols-1 sm:grid-cols-[2fr_4fr_auto] gap-2 items-stretch bg-muted rounded-lg px-2 py-2">
+                <Input
+                  class="w-full font-mono text-[15px] min-w-0"
+                  style="min-width:0;"
+                  value={pair.key}
+                  oninput={(e) => updatePair(idx, 'key', e.target.value)}
+                  placeholder="Key"
+                />
+                <div class="flex flex-col sm:flex-row gap-2 sm:gap-0 items-stretch sm:items-center w-full min-w-0">
+                  <Input
+                    class="w-full font-mono text-[15px] min-w-0"
+                    style="min-width:0;"
+                    value={pair.value}
+                    oninput={(e) => updatePair(idx, 'value', e.target.value)}
+                    placeholder="Value"
+                  />
+                </div>
+                <div class="flex flex-row gap-1 items-center justify-end h-full">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    title="Copy value"
+                    onclick={() => copyToClipboard(pair.value, `val-${idx}`)}
+                  >
+                    <ClipboardCopy size={15} />
+                  </Button>
+                  {#if otherCookieMap.has(pair.key)}
                     <Button
                       type="button"
                       variant="ghost"
                       size="icon"
-                      title="Copy value"
-                      onclick={() => copyToClipboard(pair.value, `val-${idx}`)}
+                      title="Copy value from other cookie"
+                      onclick={() => copyFromOther(idx, pair.key)}
                     >
                       <ClipboardCopy size={15} />
                     </Button>
-                    {#if otherCookieMap.has(pair.key)}
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        title="Copy value from other cookie"
-                        onclick={() => copyFromOther(idx, pair.key)}
-                      >
-                        <ClipboardCopy size={15} class="text-blue-600" />
-                      </Button>
-                    {/if}
-                    {#if copyMsg[`val-${idx}`]}
-                      <span class="text-xs text-green-600">{copyMsg[`val-${idx}`]}</span>
-                    {/if}
-                    {#if copyMsg[pair.key]}
-                      <span class="text-xs text-blue-600">{copyMsg[pair.key]}</span>
-                    {/if}
-                  </td>
-                  <td class="px-2 py-1">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      title="Remove"
-                      onclick={() => removePair(idx)}
-                    >
-                      <Trash2 size={16} />
-                    </Button>
-                  </td>
-                </tr>
-              {/each}
-            </tbody>
-          </table>
+                  {/if}
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="icon"
+                    title="Remove"
+                    onclick={() => removePair(idx)}
+                  >
+                    <Trash2 size={16} />
+                  </Button>
+                </div>
+              </div>
+              <div class="flex flex-row gap-2 px-2">
+                {#if copyMsg[`val-${idx}`]}
+                  <span class="text-xs text-green-600">{copyMsg[`val-${idx}`]}</span>
+                {/if}
+                {#if copyMsg[pair.key]}
+                  <span class="text-xs text-blue-600">{copyMsg[pair.key]}</span>
+                {/if}
+              </div>
+            {/each}
+          </div>
         </ScrollArea>
-        <div class="flex gap-2">
+        <div class="flex flex-wrap gap-2 pt-2">
           <Button type="button" variant="secondary" size="sm" onclick={addPair}>
             <Plus size={16} class="mr-1" /> Add Row
           </Button>
@@ -239,7 +240,7 @@
           </Button>
         </div>
       </div>
-      <DialogFooter class="flex justify-end gap-2 p-4 border-t bg-muted">
+      <DialogFooter class="flex justify-end gap-2 p-4 border-t bg-muted rounded-b-2xl">
         <Button type="button" variant="ghost" onclick={() => (open = false)}>
           Cancel
         </Button>
@@ -257,5 +258,60 @@
   }
   tr.bg-muted {
     background: var(--muted);
+  }
+  .rounded-xl {
+    border-radius: 1rem;
+  }
+  .rounded-2xl {
+    border-radius: 1.25rem;
+  }
+  .shadow-xl {
+    box-shadow: 0 8px 32px 0 rgba(0,0,0,0.15);
+  }
+  .shadow-inner {
+    box-shadow: inset 0 2px 8px 0 rgba(0,0,0,0.04);
+  }
+  .transition {
+    transition: background 0.15s;
+  }
+  .hover\:bg-accent:hover {
+    background: var(--accent);
+  }
+  .bg-muted\/70 {
+    background: color-mix(in srgb, var(--muted) 70%, transparent);
+  }
+  .bg-white\/90 {
+    background: color-mix(in srgb, white 90%, transparent);
+  }
+  .dark\:bg-card\/90 {
+    background: color-mix(in srgb, var(--card) 90%, transparent);
+  }
+  @media (max-width: 640px) {
+    .max-w-2xl {
+      max-width: 98vw !important;
+    }
+    .sm\:p-8 {
+      padding: 1.25rem !important;
+    }
+    .overflow-x-auto {
+      width: 100%;
+      overflow-x: auto;
+    }
+    table {
+      min-width: 420px;
+    }
+    .flex-row {
+      flex-direction: column !important;
+      align-items: stretch !important;
+      gap: 0.5rem !important;
+    }
+    .w-1\/3, .w-1\/2, .w-12, .min-w-\[120px\], .min-w-\[160px\] {
+      width: 100% !important;
+      min-width: 0 !important;
+    }
+    td, th {
+      padding-left: 0.5rem !important;
+      padding-right: 0.5rem !important;
+    }
   }
 </style>
