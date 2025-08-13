@@ -1,26 +1,26 @@
 <script lang="ts">
-	import { Textarea } from "$lib/components/ui/textarea";
-	import {
-		Card,
-		CardHeader,
-		CardTitle,
-		CardDescription,
-		CardContent,
-	} from "$lib/components/ui/card";
-	import { Button } from "$lib/components/ui/button";
-	import { ClipboardPaste } from "@lucide/svelte";
+import { Textarea } from "$lib/components/ui/textarea";
+import {
+	Card,
+	CardHeader,
+	CardTitle,
+	CardDescription,
+	CardContent,
+} from "$lib/components/ui/card";
+import { Button } from "$lib/components/ui/button";
+import { ClipboardPaste } from "@lucide/svelte";
 
-	export let cookie: string;
-	export let index: string;
-	let pasted = "";
+export let cookie: string;
+export let index: string;
+let pasted = "";
 
-	function getCookie(input: string): string | null {
-		const cookieLine = input
-			.split("\n")
-			.find((line) => line.startsWith("Cookie:"));
-		return cookieLine ? cookieLine.replace("Cookie: ", "") : null;
-	}
-	$: if (cookie.includes("# REQUEST")) cookie = getCookie(cookie) || cookie;
+function getCookie(input: string): string | null {
+	const cookieLine = input
+		.split("\n")
+		.find((line) => line.startsWith("Cookie:"));
+	return cookieLine ? cookieLine.replace("Cookie: ", "") : null;
+}
+$: if (cookie.includes("# REQUEST")) cookie = getCookie(cookie) || cookie;
 </script>
 
 <Card>

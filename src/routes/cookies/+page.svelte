@@ -1,64 +1,77 @@
 <script lang="ts">
-	import { Button } from "$lib/components/ui/button";
-	import CookieInput from "./cookie-input.svelte";
-	import CookieComparisonTable from "$lib/components/cookies/CookieComparisonTable.svelte";
+import { Button } from "$lib/components/ui/button";
+import CookieInput from "./cookie-input.svelte";
+import CookieComparisonTable from "$lib/components/cookies/CookieComparisonTable.svelte";
+import { onMount } from "svelte";
 
-	let error = "";
+let error = "";
 
-	function parseCookie(cookieStr: string): Map<string, string> {
-		const map = new Map<string, string>();
-		try {
-			cookieStr
-				.split(";")
-				.map((pair) => pair.trim())
-				.forEach((pair) => {
-					const [key, value] = pair.split("=");
-					map.set(key, value);
-				});
-			return map;
-		} catch (e) {
-			error =
-				(typeof e === "object" &&
-					!!e &&
-					"message" in e &&
-					(typeof e?.message === "string" ? e?.message : `${e?.message}`)) ||
-				"Error parsing cookie";
-			return map;
-		}
+function parseCookie(cookieStr: string): Map<string, string> {
+	const map = new Map<string, string>();
+	try {
+		cookieStr
+			.split(";")
+			.map((pair) => pair.trim())
+			.forEach((pair) => {
+				const [key, value] = pair.split("=");
+				map.set(key, value);
+			});
+		return map;
+	} catch (e) {
+		error =
+			(typeof e === "object" &&
+				!!e &&
+				"message" in e &&
+				(typeof e?.message === "string" ? e?.message : `${e?.message}`)) ||
+			"Error parsing cookie";
+		return map;
 	}
+}
 
-	let firstCookie = "";
-	let secondCookie = "";
-	let firstCookieMap = new Map<string, string>();
-	let secondCookieMap = new Map<string, string>();
+let firstCookie = "";
+let secondCookie = "";
+let firstCookieMap = new Map<string, string>();
+let secondCookieMap = new Map<string, string>();
 
-	let firstCookieKeys: string[] = Array.from(firstCookieMap.keys());
-	let secondCookieKeys: string[] = Array.from(secondCookieMap.keys());
-	let commonKeys: string[] = [];
-	let uniqueFirstKeys: string[] = [];
-	let uniqueSecondKeys: string[] = [];
+// Load from localStorage on mount
+onMount(() => {
+	console.log("loading from localStorage");
+	const storedFirst = localStorage.getItem("firstCookie");
+	const storedSecond = localStorage.getItem("secondCookie");
+	if (storedFirst !== null) firstCookie = storedFirst;
+	if (storedSecond !== null) secondCookie = storedSecond;
+});
 
-	function compareCookies() {
-		firstCookieMap = parseCookie(firstCookie);
-		secondCookieMap = parseCookie(secondCookie);
+let firstCookieKeys: string[] = Array.from(firstCookieMap.keys());
+let secondCookieKeys: string[] = Array.from(secondCookieMap.keys());
+let commonKeys: string[] = [];
+let uniqueFirstKeys: string[] = [];
+let uniqueSecondKeys: string[] = [];
 
-		firstCookieKeys = Array.from(firstCookieMap.keys());
-		secondCookieKeys = Array.from(secondCookieMap.keys());
+function compareCookies() {
+	firstCookieMap = parseCookie(firstCookie);
+	secondCookieMap = parseCookie(secondCookie);
 
-		commonKeys = firstCookieKeys.filter((key) =>
-			secondCookieKeys.includes(key),
-		);
-		uniqueFirstKeys = firstCookieKeys.filter(
-			(key) => !secondCookieKeys.includes(key),
-		);
-		uniqueSecondKeys = secondCookieKeys.filter(
-			(key) => !firstCookieKeys.includes(key),
-		);
-	}
+	firstCookieKeys = Array.from(firstCookieMap.keys());
+	secondCookieKeys = Array.from(secondCookieMap.keys());
 
-	$: if (firstCookie || secondCookie) {
-		compareCookies();
-	}
+	commonKeys = firstCookieKeys.filter((key) => secondCookieKeys.includes(key));
+	uniqueFirstKeys = firstCookieKeys.filter(
+		(key) => !secondCookieKeys.includes(key),
+	);
+	uniqueSecondKeys = secondCookieKeys.filter(
+		(key) => !firstCookieKeys.includes(key),
+	);
+}
+
+$: if (firstCookie || secondCookie) {
+	compareCookies();
+}
+
+$: if (typeof window !== "undefined") {
+	if (firstCookie) localStorage.setItem("firstCookie", firstCookie);
+	if (secondCookie) localStorage.setItem("secondCookie", secondCookie);
+}
 </script>
 
 <div class="p-4 space-y-6">

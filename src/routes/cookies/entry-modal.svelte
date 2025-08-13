@@ -47,7 +47,7 @@ async function copyToClipboard(
 			variant="outline"
 			size="sm"
 			class="flex items-center gap-1"
-			on:click={() => copyToClipboard(key, "key")}
+			onclick={() => copyToClipboard(key, "key")}
 			title="Copy key"
 		>
 			<ClipboardCopy size={16} />
