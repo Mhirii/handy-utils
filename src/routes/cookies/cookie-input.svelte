@@ -9,6 +9,7 @@ import {
 } from "$lib/components/ui/card";
 import { Button } from "$lib/components/ui/button";
 import { ClipboardPaste } from "@lucide/svelte";
+    import CookieEditor from "$lib/components/cookies/CookieEditor.svelte";
 
 export let cookie: string;
 export let index: string;
@@ -29,19 +30,24 @@ $: if (cookie.includes("# REQUEST")) cookie = getCookie(cookie) || cookie;
 			<CardTitle class="capitalize">{index} Cookie</CardTitle>
 			<CardDescription>Paste your {index} cookie here</CardDescription>
 		</div>
-		<Button
-			variant="ghost"
-			size="icon"
-			onclick={async () => {
-				try {
-					pasted = await navigator.clipboard.readText();
-					const c = getCookie(pasted);
-					if (c) cookie = c;
-				} catch (err) {
-					console.error("Failed to read clipboard:", err);
-				}
-			}}><ClipboardPaste /></Button
-		>
+		<div>
+			<CookieEditor cookieString={cookie} onSave={(c) => (cookie = c)}>
+
+			</CookieEditor>
+			<Button
+				variant="ghost"
+				size="icon"
+				onclick={async () => {
+					try {
+						pasted = await navigator.clipboard.readText();
+						const c = getCookie(pasted);
+						if (c) cookie = c;
+					} catch (err) {
+						console.error("Failed to read clipboard:", err);
+					}
+				}}><ClipboardPaste /></Button
+			>
+		</div>
 	</CardHeader>
 	<CardContent>
 		<Textarea

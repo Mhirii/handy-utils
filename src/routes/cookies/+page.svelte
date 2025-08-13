@@ -1,7 +1,8 @@
 <script lang="ts">
 import { Button } from "$lib/components/ui/button";
-import CookieInput from "./cookie-input.svelte";
-import CookieComparisonTable from "$lib/components/cookies/CookieComparisonTable.svelte";
+	import CookieInput from "./cookie-input.svelte";
+	import CookieComparisonTable from "$lib/components/cookies/CookieComparisonTable.svelte";
+	import CookieEditor from "$lib/components/cookies/CookieEditor.svelte";
 import { onMount } from "svelte";
 
 let error = "";
