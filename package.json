@@ -32,6 +32,7 @@
 		"vite": "^6.2.6"
 	},
 	"dependencies": {
-		"mode-watcher": "^1.0.8"
+		"mode-watcher": "^1.0.8",
+		"stytch": "^13.2.3"
 	}
 }
