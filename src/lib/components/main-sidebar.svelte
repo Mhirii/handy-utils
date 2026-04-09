@@ -12,7 +12,7 @@
 		data,
 	}: {
 		children: Snippet;
-		data: { navElements: SidebarElement[]; user?: UserPromise };
+		data: { navElements: SidebarElement[]; user?: UserPromise | undefined };
 	} = $props();
 </script>
 

@@ -1,6 +1,8 @@
+import type { UserPrefersMode } from "mode-watcher"
 import { Client } from "stytch"
 import { STYTCH_CLIENT_SECRET, STYTCH_PROJECT_ID } from "$env/static/private"
 import type { SidebarElement } from "$lib/types/sidebar_elements"
+import type { UserPromise } from "$lib/types/user"
 import type { LayoutServerLoad } from "./$types"
 
 export const load: LayoutServerLoad = async ({ cookies }) => {
@@ -47,15 +49,16 @@ export const load: LayoutServerLoad = async ({ cookies }) => {
 		project_id: STYTCH_PROJECT_ID,
 		secret: STYTCH_CLIENT_SECRET,
 	})
-	const userPromise = client.users.get({ user_id: userID }).then((r) => {
-		console.log(r)
-		return {
-			emails: r.emails.map((e) => ({ email: e.email, verified: e.verified })),
-			name: r.name,
-			user_id: r.user_id,
-			display: r.emails[0].email.split("@")[0],
-		}
-	})
+	const userPromise: UserPromise | undefined = client.users
+		.get({ user_id: userID })
+		.then((r) => {
+			return {
+				emails: r.emails.map((e) => ({ email: e.email, verified: e.verified })),
+				name: r.name,
+				user_id: r.user_id,
+				display: r.emails[0].email.split("@")[0],
+			}
+		})
 
 	return {
 		navElements,
