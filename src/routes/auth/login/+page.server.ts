@@ -47,11 +47,14 @@ export const actions: Actions = {
 				form,
 			})
 		}
+		const display = form.data.email.split("@")[0]
+
 		console.log(res)
 		const cookies = {
 			session_jwt: res.session_jwt,
 			session_token: res.session_token,
 			user_id: res.user_id,
+			display,
 		}
 		for (const [k, v] of Object.entries(cookies)) {
 			console.log(`setting cookie ${k}=${v}`)

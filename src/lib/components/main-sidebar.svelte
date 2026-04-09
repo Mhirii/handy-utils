@@ -6,17 +6,20 @@
 	import { Scrollbar } from "$lib/components/ui/scroll-area";
 	import type { SidebarElement } from "$lib/types/sidebar_elements";
 	import type { Snippet } from "svelte";
+	import type { UserPromise } from "$lib/types/user";
 	let {
 		children,
 		data,
-	}: { children: Snippet; data: { navElements: SidebarElement[] } } =
-		$props();
+	}: {
+		children: Snippet;
+		data: { navElements: SidebarElement[]; user?: UserPromise };
+	} = $props();
 </script>
 
 <Sidebar.Provider class="flex flex-col" open={false}>
-	<SiteHeader />
+	<SiteHeader user={data.user} />
 	<div class="flex flex-1">
-		<AppSidebar elements={data.navElements} />
+		<AppSidebar elements={data.navElements} user={data.user} />
 		<Sidebar.Inset>
 			<ScrollArea class="h-full">
 				{@render children()}

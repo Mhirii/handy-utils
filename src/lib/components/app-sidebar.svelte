@@ -1,39 +1,5 @@
 <script lang="ts" module>
-	import SquareTerminalIcon from "@lucide/svelte/icons/square-terminal";
-	import BotIcon from "@lucide/svelte/icons/bot";
-	import BookOpenIcon from "@lucide/svelte/icons/book-open";
-	import Settings2Icon from "@lucide/svelte/icons/settings-2";
 	import CommandIcon from "@lucide/svelte/icons/command";
-	const data = {
-		user: {
-			name: "shadcn",
-			email: "m@example.com",
-			avatar: "/avatars/shadcn.jpg",
-		},
-		navMain: [
-			{
-				title: "Cookie Tools",
-				url: "/cookies",
-				icon: Cookie,
-				isActive: true,
-			},
-			{
-				title: "Base64 Tools",
-				url: "/base64",
-				icon: Code,
-			},
-			{
-				title: "Documentation",
-				url: "#",
-				icon: BookOpenIcon,
-			},
-			{
-				title: "Settings",
-				url: "#",
-				icon: Settings2Icon,
-			},
-		],
-	};
 </script>
 
 <script lang="ts">
@@ -41,15 +7,22 @@
 	import * as Sidebar from "$lib/components/ui/sidebar/index.js";
 	import NavMain from "./nav-main.svelte";
 	import NavUser from "./nav-user.svelte";
-	import { Code, Cookie } from "@lucide/svelte";
 	import type { SidebarElement } from "$lib/types/sidebar_elements";
+	import type { NavUserType, UserPromise } from "$lib/types/user";
+	import { Button } from "./ui/button";
+	import { LogInIcon, LockIcon } from "@lucide/svelte";
+	import { goto } from "$app/navigation";
 	let {
 		elements,
+		user,
 		ref = $bindable(null),
 		...restProps
 	}: ComponentProps<typeof Sidebar.Root> & {
 		elements: SidebarElement[];
+		user?: UserPromise | undefined;
 	} = $props();
+
+	const sidebar = Sidebar.useSidebar();
 </script>
 
 <Sidebar.Root
@@ -87,6 +60,16 @@
 		<NavMain items={elements} />
 	</Sidebar.Content>
 	<Sidebar.Footer>
-		<NavUser user={data.user} />
+		{#if user}
+			<NavUser {user} />
+		{:else}
+			<Button onclick={() => goto("/auth/login")}>
+				{#if sidebar.open}
+					Login
+				{:else}
+					<LogInIcon />
+				{/if}
+			</Button>
+		{/if}
 	</Sidebar.Footer>
 </Sidebar.Root>

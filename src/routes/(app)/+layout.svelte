@@ -6,8 +6,13 @@
 
 	console.log("data");
 	console.log(data);
+	$effect(() => {
+		data.userPromise
+			?.then((res) => console.log("user", res))
+			.catch((e) => console.log(e));
+	});
 </script>
 
-<MainSidebar {data}>
+<MainSidebar data={{ navElements: data.navElements, user: data.userPromise }}>
 	{@render children()}
 </MainSidebar>

@@ -50,10 +50,11 @@ export const actions: Actions = {
 			})
 		}
 
+		const display = form.data.email.split("@")[0]
 		try {
 			await db.insert(users).values({
 				id: res.user_id,
-				display: form.data.email.split("@")[0],
+				display,
 			})
 		} catch (e) {
 			console.log(e)
@@ -73,6 +74,7 @@ export const actions: Actions = {
 			session_jwt: res.session_jwt,
 			session_token: res.session_token,
 			user_id: res.user_id,
+			display,
 		}
 		for (const [k, v] of Object.entries(cookies)) {
 			event.cookies.set(k, v, { path: "/" })

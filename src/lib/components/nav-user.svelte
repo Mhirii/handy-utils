@@ -9,16 +9,18 @@
 	import * as Avatar from "$lib/components/ui/avatar/index.js";
 	import * as DropdownMenu from "$lib/components/ui/dropdown-menu/index.js";
 	import * as Sidebar from "$lib/components/ui/sidebar/index.js";
+	import type { NavUserType, UserPromise } from "$lib/types/user";
+	import { Skeleton } from "./ui/skeleton";
 
 	let {
 		user,
 	}: {
-		user: {
-			name: string;
-			email: string;
-			avatar: string;
-		};
+		user: UserPromise;
 	} = $props();
+
+	$effect(() => {
+		console.log("user", user);
+	});
 
 	const sidebar = Sidebar.useSidebar();
 </script>
@@ -34,12 +36,31 @@
 						{...props}
 					>
 						<Avatar.Root class="size-8 rounded-lg">
-							<Avatar.Image src={user.avatar} alt={user.name} />
-							<Avatar.Fallback class="rounded-lg">CN</Avatar.Fallback>
+							{#await user}
+								<Skeleton class="rounded-lg w-8 h-8" />
+							{:then u}
+								<Avatar.Image
+									src={""}
+									alt={u?.name?.first_name || u?.display}
+								/>
+								<Avatar.Fallback class="rounded-lg">
+									{u?.display.charAt(0).toUpperCase()}
+								</Avatar.Fallback>
+							{/await}
 						</Avatar.Root>
-						<div class="grid flex-1 text-left text-sm leading-tight">
-							<span class="truncate font-medium">{user.name}</span>
-							<span class="truncate text-xs">{user.email}</span>
+						<div
+							class="grid flex-1 text-left text-sm leading-tight"
+						>
+							{#await user}
+								<Skeleton class="w-full h-4" />
+							{:then u}
+								<span class="truncate font-medium">
+									{u?.name?.first_name || u?.display}
+								</span>
+								<span class="truncate text-xs">
+									{u?.emails[0]?.email}
+								</span>
+							{/await}
 						</div>
 						<ChevronsUpDownIcon class="ml-auto size-4" />
 					</Sidebar.MenuButton>
@@ -52,14 +73,35 @@
 				sideOffset={4}
 			>
 				<DropdownMenu.Label class="p-0 font-normal">
-					<div class="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
+					<div
+						class="flex items-center gap-2 px-1 py-1.5 text-left text-sm"
+					>
 						<Avatar.Root class="size-8 rounded-lg">
-							<Avatar.Image src={user.avatar} alt={user.name} />
-							<Avatar.Fallback class="rounded-lg">CN</Avatar.Fallback>
+							{#await user}
+								<Skeleton class="rounded-lg w-8 h-8" />
+							{:then u}
+								<Avatar.Image
+									src={""}
+									alt={u?.name?.first_name || u?.display}
+								/>
+								<Avatar.Fallback class="rounded-lg">
+									{u?.display.charAt(0).toUpperCase()}
+								</Avatar.Fallback>
+							{/await}
 						</Avatar.Root>
-						<div class="grid flex-1 text-left text-sm leading-tight">
-							<span class="truncate font-medium">{user.name}</span>
-							<span class="truncate text-xs">{user.email}</span>
+						<div
+							class="grid flex-1 text-left text-sm leading-tight"
+						>
+							{#await user}
+								<Skeleton class="w-full h-4" />
+							{:then u}
+								<span class="truncate font-medium">
+									{u?.name?.first_name || u?.display}
+								</span>
+								<span class="truncate text-xs">
+									{u?.emails[0]?.email}
+								</span>
+							{/await}
 						</div>
 					</div>
 				</DropdownMenu.Label>
