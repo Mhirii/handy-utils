@@ -1,5 +1,6 @@
 import { defineRelations } from "drizzle-orm"
 import {
+	boolean,
 	integer,
 	pgTable,
 	primaryKey,
@@ -21,6 +22,8 @@ export const snippets = pgTable("snippets", {
 	description: text("description").notNull(),
 	code: text("code").notNull(),
 	languageId: text("language_id"),
+	isPublic: boolean("is_public").notNull(),
+	publishedAt: timestamp("published_at"),
 	createdAt: timestamp("created_at").notNull().defaultNow(),
 	updatedAt: timestamp("updated_at").notNull().defaultNow(),
 })
