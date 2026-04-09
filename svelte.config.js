@@ -3,7 +3,15 @@ import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 
 const config = {
 	preprocess: vitePreprocess(),
-	kit: { adapter: adapter() }
+	kit: {
+		adapter: adapter(),
+		typescript: {
+			config: (config) => ({
+				...config,
+				include: [...config.include, '../drizzle.config.ts']
+			})
+		}
+	}
 };
 
 export default config;
