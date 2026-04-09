@@ -1,14 +1,10 @@
-import type { PageServerLoad, Actions } from "./$types.js"
 import { fail, redirect } from "@sveltejs/kit"
+import { Client, type StytchError } from "stytch"
 import { superValidate } from "sveltekit-superforms"
 import { zod4 } from "sveltekit-superforms/adapters"
+import { STYTCH_CLIENT_SECRET, STYTCH_PROJECT_ID } from "$env/static/private"
+import type { Actions, PageServerLoad } from "./$types.js"
 import { formSchema } from "./schema"
-import { Client, StytchError } from "stytch"
-import {
-	STYTCH_CLIENT_ID,
-	STYTCH_CLIENT_SECRET,
-	STYTCH_PROJECT_ID,
-} from "$env/static/private"
 
 export const load: PageServerLoad = async () => {
 	return {

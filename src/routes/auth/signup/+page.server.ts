@@ -1,10 +1,12 @@
-import type { PageServerLoad, Actions } from "./$types.js"
 import { fail, redirect } from "@sveltejs/kit"
+import { Client, type StytchError } from "stytch"
 import { superValidate } from "sveltekit-superforms"
 import { zod4 } from "sveltekit-superforms/adapters"
-import { formSchema } from "./schema"
-import { Client, StytchError } from "stytch"
 import { STYTCH_CLIENT_SECRET, STYTCH_PROJECT_ID } from "$env/static/private"
+import { db } from "$lib/server/db/index.js"
+import { users } from "$lib/server/db/schema.js"
+import type { Actions, PageServerLoad } from "./$types.js"
+import { formSchema } from "./schema"
 
 export const load: PageServerLoad = async () => {
 	return {
@@ -43,6 +45,23 @@ export const actions: Actions = {
 					status_code: res.status_code,
 					type: res.error_type,
 					message: res.error_message,
+				},
+				form,
+			})
+		}
+
+		try {
+			await db.insert(users).values({
+				id: res.user_id,
+				display: form.data.email.split("@")[0],
+			})
+		} catch (e) {
+			console.log(e)
+			return fail(400, {
+				error: {
+					status_code: res.status_code,
+					type: "Unknown Error",
+					message: "Something went wrong",
 				},
 				form,
 			})
