@@ -9,8 +9,15 @@
 	import { Button } from "./ui/button";
 	import type { Component } from "svelte";
 	import { Code, Cookie } from "@lucide/svelte";
+	import type { UserPromise } from "$lib/types/user";
+	import { goto } from "$app/navigation";
 
 	let open = $state(false);
+	let {
+		user,
+	}: {
+		user?: UserPromise | undefined;
+	} = $props();
 
 	type CommandEntry = {
 		name: string;
@@ -69,18 +76,31 @@
 				{/each}
 			</Command.Group>
 			<Command.Separator />
-			<Command.Group heading="Settings">
-				<Command.Item>
-					<UserIcon class="mr-2 size-4" />
-					<span>Profile</span>
-					<Command.Shortcut>⌘P</Command.Shortcut>
-				</Command.Item>
-				<Command.Item>
-					<SettingsIcon class="mr-2 size-4" />
-					<span>Settings</span>
-					<Command.Shortcut>⌘S</Command.Shortcut>
-				</Command.Item>
-			</Command.Group>
+			{#if user}
+				<Command.Group heading="Settings">
+					<Command.Item>
+						<UserIcon class="mr-2 size-4" />
+						<span>Profile</span>
+						<Command.Shortcut>⌘P</Command.Shortcut>
+					</Command.Item>
+					<Command.Item>
+						<SettingsIcon class="mr-2 size-4" />
+						<span>Settings</span>
+						<Command.Shortcut>⌘S</Command.Shortcut>
+					</Command.Item>
+				</Command.Group>
+			{:else}
+				<Command.Group heading="Auth">
+					<Command.Item onclick={() => goto("/auth/login")}>
+						<UserIcon class="mr-2 size-4" />
+						<span>Login</span>
+					</Command.Item>
+					<Command.Item onclick={() => goto("/auth/signup")}>
+						<UserIcon class="mr-2 size-4" />
+						<span>Signup</span>
+					</Command.Item>
+				</Command.Group>
+			{/if}
 		</Command.List>
 	</Command.Dialog>
 </Button>

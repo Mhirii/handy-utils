@@ -50,7 +50,7 @@
 		</div>
 		<div class="flex-1 flex items-center gap-2 justify-end">
 			<!-- <SearchForm class="w-full sm:ml-auto sm:w-auto" /> -->
-			<CommandMenu />
+			<CommandMenu {user} />
 
 			<DropdownMenu.Root>
 				{#if user}
