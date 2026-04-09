@@ -1,8 +1,13 @@
 <script lang="ts">
 	import MainSidebar from "$lib/components/main-sidebar.svelte";
-	let { children } = $props();
+	import type { Snippet } from "svelte";
+	import type { LayoutData } from "./$types";
+	let { children, data }: { children: Snippet; data: LayoutData } = $props();
+
+	console.log("data");
+	console.log(data);
 </script>
 
-<MainSidebar>
+<MainSidebar {data}>
 	{@render children()}
 </MainSidebar>

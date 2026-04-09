@@ -4,13 +4,19 @@
 	import AppSidebar from "$lib/components/app-sidebar.svelte";
 	import ScrollArea from "$lib/components/ui/scroll-area/scroll-area.svelte";
 	import { Scrollbar } from "$lib/components/ui/scroll-area";
-	let { children } = $props();
+	import type { SidebarElement } from "$lib/types/sidebar_elements";
+	import type { Snippet } from "svelte";
+	let {
+		children,
+		data,
+	}: { children: Snippet; data: { navElements: SidebarElement[] } } =
+		$props();
 </script>
 
 <Sidebar.Provider class="flex flex-col" open={false}>
 	<SiteHeader />
 	<div class="flex flex-1">
-		<AppSidebar />
+		<AppSidebar elements={data.navElements} />
 		<Sidebar.Inset>
 			<ScrollArea class="h-full">
 				{@render children()}

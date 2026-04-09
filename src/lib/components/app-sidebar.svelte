@@ -42,10 +42,14 @@
 	import NavMain from "./nav-main.svelte";
 	import NavUser from "./nav-user.svelte";
 	import { Code, Cookie } from "@lucide/svelte";
+	import type { SidebarElement } from "$lib/types/sidebar_elements";
 	let {
+		elements,
 		ref = $bindable(null),
 		...restProps
-	}: ComponentProps<typeof Sidebar.Root> = $props();
+	}: ComponentProps<typeof Sidebar.Root> & {
+		elements: SidebarElement[];
+	} = $props();
 </script>
 
 <Sidebar.Root
@@ -65,8 +69,12 @@
 							>
 								<CommandIcon class="size-4" />
 							</div>
-							<div class="grid flex-1 text-left text-sm leading-tight">
-								<span class="truncate font-medium">Acme Inc</span>
+							<div
+								class="grid flex-1 text-left text-sm leading-tight"
+							>
+								<span class="truncate font-medium"
+									>Acme Inc</span
+								>
 								<span class="truncate text-xs">Enterprise</span>
 							</div>
 						</a>
@@ -76,7 +84,7 @@
 		</Sidebar.Menu>
 	</Sidebar.Header>
 	<Sidebar.Content>
-		<NavMain items={data.navMain} />
+		<NavMain items={elements} />
 	</Sidebar.Content>
 	<Sidebar.Footer>
 		<NavUser user={data.user} />

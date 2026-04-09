@@ -27,7 +27,8 @@ export const actions: Actions = {
 		})
 		const res = await client.passwords.authenticate({
 			email: form.data.email,
-			password: form.data.password
+			password: form.data.password,
+			session_duration_minutes: 60,
 		}).catch((e)=>{
 					return (e as StytchError)
 				})
@@ -45,8 +46,10 @@ export const actions: Actions = {
 				form,
 			})
 		}
+		console.log(res)
 		const cookies = { session_jwt: res.session_jwt, session_token: res.session_token,user_id:res.user_id }
 		for (const [k,v] of Object.entries(cookies)) {
+			console.log(`setting cookie ${k}=${v}`)
 			event.cookies.set(k,v,{path:"/"})
 		}
 		return redirect(302, "/")
