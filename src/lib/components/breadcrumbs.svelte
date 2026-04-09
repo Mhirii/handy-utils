@@ -15,12 +15,16 @@
 		let currentHref = "/";
 		const pathParts = path?.split("/") ?? ["app"];
 		for (let i = 1; i < pathParts.length; i++) {
-			currentHref += `${pathParts[i]}`;
+			const part = pathParts[i];
+			if (part.startsWith("(") && part.endsWith(")")) {
+				continue;
+			}
+			currentHref += `${part}`;
 			if (i < pathParts.length - 1) {
 				currentHref += "/";
 			}
 			entries.push({
-				name: pathParts[i],
+				name: part,
 				href: currentHref,
 				isLast: i === pathParts.length - 1,
 			});

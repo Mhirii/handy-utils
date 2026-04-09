@@ -12,7 +12,6 @@
 
 	import { zod4Client } from "sveltekit-superforms/adapters";
 	import { toast } from "svelte-sonner";
-	import { Button } from "$lib/components/ui/button/index";
 
 	let { data }: { data: { form: SuperValidated<Infer<FormSchema>> } } =
 		$props();
@@ -38,8 +37,8 @@
 
 <Card>
 	<div class="px-6 pt-2 text-center">
-		<h1 class="text-2xl font-bold">Welcome back</h1>
-		<p class="mt-1 text-muted-foreground text-sm">Log in to your account</p>
+		<h1 class="text-2xl font-bold">Welcome</h1>
+		<p class="mt-1 text-muted-foreground text-sm">Create your account</p>
 	</div>
 	<div class="px-6 pt-4 pb-6">
 		<form
@@ -67,14 +66,7 @@
 			<Form.Field class="flex flex-col gap-1" {form} name="password">
 				<Form.Control>
 					{#snippet children({ props })}
-						<div class="flex items-center">
-							<Label for="password">Password</Label>
-							<a
-								href="#"
-								class="ml-auto text-xs text-primary underline-offset-4 hover:underline"
-								>Forgot?</a
-							>
-						</div>
+						<Label for="password">Password</Label>
 						<Input
 							{...props}
 							id="password"
@@ -87,27 +79,14 @@
 				</Form.Control>
 				<Form.FieldErrors />
 			</Form.Field>
-			<Form.Button type="submit" class="mt-2 w-full">Login</Form.Button>
+			<Form.Button type="submit" class="mt-2 w-full">Sign up</Form.Button>
 		</form>
-		<div class="my-4 flex items-center justify-center w-full">
-			<span class="text-xs text-muted-foreground">
-				or continue with
-			</span>
-		</div>
-		<div class="flex flex-col gap-2">
-			<Button type="button" variant="outline" class="w-full" disabled>
-				Github
-			</Button>
-			<Button type="button" variant="outline" class="w-full" disabled>
-				Google
-			</Button>
-		</div>
 	</div>
 </Card>
 <div class="text-center text-sm text-muted-foreground">
-	Don’t have an account?
+	Already have an account?
 	<a
-		href="/auth/signup"
+		href="/auth/login"
 		class="text-primary font-medium underline-offset-4 hover:underline"
 	>
 		Sign up
