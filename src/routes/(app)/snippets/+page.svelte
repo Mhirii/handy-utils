@@ -12,28 +12,34 @@
 	import { Checkbox } from "$lib/components/ui/checkbox";
 	import Separator from "$lib/components/ui/separator/separator.svelte";
 	import * as Popover from "$lib/components/ui/popover";
+	import * as Command from "$lib/components/ui/command";
 	import {
 		Search,
 		Plus,
-		Code2,
+		Code,
 		Calendar,
 		Clock,
 		Globe,
 		Lock,
 		ChevronDown,
-		Filter,
+		Funnel,
 		X,
 		Copy,
 		Check,
-		MoreHorizontal,
+		Ellipsis,
 		Trash2,
-		Edit,
+		SquarePen,
 		Tag,
 		ChevronLeft,
 		ChevronRight,
 		ChevronsLeft,
 		ChevronsRight,
+		ChevronsUpDownIcon,
+		CheckIcon,
 	} from "@lucide/svelte";
+
+	import { tick } from "svelte";
+	import { cn } from "$lib/utils";
 
 	interface Snippet {
 		id: number;
@@ -197,6 +203,16 @@
 		}, 2000);
 	}
 
+	let createSnippetLangOpen = $state(false);
+
+	let triggerRef = $state<HTMLButtonElement>(null!);
+	function closeAndFocusTrigger() {
+		createSnippetLangOpen = false;
+		tick().then(() => {
+			triggerRef.focus();
+		});
+	}
+
 	let searchInput = $state((page.data as PageData).filters.search);
 </script>
 
@@ -207,7 +223,7 @@
 				<div
 					class="flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10"
 				>
-					<Code2 class="w-5 h-5 text-primary" />
+					<Code class="w-5 h-5 text-primary" />
 				</div>
 				<div>
 					<h1 class="text-2xl font-bold tracking-tight">Snippets</h1>
@@ -256,18 +272,59 @@
 							</div>
 							<div class="grid gap-2">
 								<Label for="language">Language</Label>
-								<select
-									id="language"
-									name="language"
-									class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-									bind:value={newSnippet.language}
-								>
-									{#each (page.data as PageData).languages as lang}
-										<option value={lang.id}
-											>{lang.id}</option
-										>
-									{/each}
-								</select>
+								<Popover.Root bind:open={createSnippetLangOpen}>
+									<Popover.Trigger bind:ref={triggerRef}>
+										{#snippet child({ props })}
+											<Button
+												variant="outline"
+												class="w-[200px] justify-between"
+												{...props}
+												role="combobox"
+												aria-expanded={createSnippetLangOpen}
+											>
+												{newSnippet.language ||
+													"Select a framework..."}
+												<ChevronsUpDownIcon
+													class="ms-2 size-4 shrink-0 opacity-50"
+												/>
+											</Button>
+										{/snippet}
+									</Popover.Trigger>
+									<Popover.Content class="w-[200px] p-0">
+										<Command.Root>
+											<Command.Input
+												placeholder="Search languages..."
+											/>
+											<Command.List>
+												<Command.Empty>
+													No languages found.
+												</Command.Empty>
+												<Command.Group>
+													{#each (page.data as PageData).languages as lang}
+														<Command.Item
+															value={lang.id}
+															onSelect={() => {
+																newSnippet.language =
+																	lang.id;
+																closeAndFocusTrigger();
+															}}
+														>
+															<CheckIcon
+																class={cn(
+																	"me-2 size-4",
+																	newSnippet.language !==
+																		lang.id &&
+																		"text-transparent",
+																)}
+															/>
+															{lang.id}
+														</Command.Item>
+													{/each}
+												</Command.Group>
+											</Command.List>
+										</Command.Root>
+									</Popover.Content>
+								</Popover.Root>
 							</div>
 							<div class="grid gap-2">
 								<Label for="tags">Tags (comma-separated)</Label>
@@ -338,7 +395,7 @@
 				<Popover.Root>
 					<Popover.Trigger>
 						<Button variant="outline" class="gap-2 min-w-[140px]">
-							<Filter class="w-4 h-4" />
+							<Funnel class="w-4 h-4" />
 							Language
 							{#if (page.data as PageData).filters.language}
 								<Badge
@@ -501,7 +558,7 @@
 				<div
 					class="flex items-center justify-center w-16 h-16 rounded-full bg-muted mb-4"
 				>
-					<Code2 class="w-8 h-8 text-muted-foreground" />
+					<Code class="w-8 h-8 text-muted-foreground" />
 				</div>
 				<h3 class="text-lg font-semibold mb-1">No snippets found</h3>
 				<p class="text-sm text-muted-foreground max-w-sm">
@@ -552,12 +609,12 @@
 											size="icon"
 											class="opacity-0 group-hover:opacity-100 transition-opacity -mr-2 -mt-1"
 										>
-											<MoreHorizontal class="w-4 h-4" />
+											<Ellipsis class="w-4 h-4" />
 										</Button>
 									</DropdownMenu.Trigger>
 									<DropdownMenu.Content align="end">
 										<DropdownMenu.Item>
-											<Edit class="w-4 h-4 mr-2" />
+											<SquarePen class="w-4 h-4 mr-2" />
 											Edit
 										</DropdownMenu.Item>
 										<DropdownMenu.Separator />
