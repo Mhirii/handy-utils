@@ -15,6 +15,7 @@
 		SquarePen,
 	} from "@lucide/svelte";
 	import { Highlight, HighlightAuto } from "svelte-highlight";
+	import { toast } from "svelte-sonner";
 
 	import theme from "svelte-highlight/styles/github-dark";
 	import * as languages from "svelte-highlight/languages";
@@ -62,11 +63,38 @@
 	}
 
 	function copyCode(id: number, code: string) {
-		navigator.clipboard.writeText(code);
-		copiedId = id;
-		setTimeout(() => {
-			copiedId = null;
-		}, 2000);
+		navigator.clipboard
+			.writeText(code)
+			.then(() => {
+				copiedId = id;
+				toast.success("Copied to clipboard");
+				setTimeout(() => {
+					copiedId = null;
+				}, 2000);
+			})
+			.catch(() => {
+				// Fallback: copy to clipboard using textarea
+				const textarea = document.createElement("textarea");
+				textarea.value = code;
+				textarea.style.position = "fixed";
+				textarea.style.opacity = "0";
+				document.body.appendChild(textarea);
+				textarea.select();
+				try {
+					document.execCommand("copy");
+					copiedId = id;
+					toast.success("Copied to clipboard");
+					setTimeout(() => {
+						copiedId = null;
+					}, 2000);
+				} catch {
+					toast.error(
+						"Failed to copy. Your browser may not support clipboard access.",
+					);
+				} finally {
+					document.body.removeChild(textarea);
+				}
+			});
 	}
 
 	// @ts-ignore
