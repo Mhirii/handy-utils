@@ -52,6 +52,7 @@
 		"postgres": "^3.4.9",
 		"radix-ui": "^1.4.3",
 		"shadcn": "^4.2.0",
-		"stytch": "^13.2.3"
+		"stytch": "^13.2.3",
+		"svelte-highlight": "^7.9.0"
 	}
 }

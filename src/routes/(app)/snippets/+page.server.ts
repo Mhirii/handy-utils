@@ -1,7 +1,6 @@
 import { fail, redirect } from "@sveltejs/kit"
-import { eq } from "drizzle-orm"
 import { db } from "$lib/server/db"
-import { languages, snippets, snippetTags, tags } from "$lib/server/db/schema"
+import { snippets, snippetTags, tags } from "$lib/server/db/schema"
 import type { Actions, PageServerLoad } from "./$types"
 
 export const load: PageServerLoad = async ({ cookies, url }) => {
@@ -89,7 +88,8 @@ export const load: PageServerLoad = async ({ cookies, url }) => {
 		title: s.title,
 		description: s.description,
 		code: s.code,
-		language: s.language?.extension || "text",
+		language: s.language?.id || "text",
+		languageColor: s.language?.color || null,
 		tags: s.tags.map((t) => t.name),
 		isPublic: s.isPublic,
 		createdAt: s.createdAt.toISOString(),

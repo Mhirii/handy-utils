@@ -3,43 +3,25 @@
 	import { goto } from "$app/navigation";
 	import { Button } from "$lib/components/ui/button";
 	import { Input } from "$lib/components/ui/input";
-	import { Textarea } from "$lib/components/ui/textarea";
-	import { Label } from "$lib/components/ui/label";
 	import { Badge } from "$lib/components/ui/badge";
-	import * as Dialog from "$lib/components/ui/dialog";
-	import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
-	import * as Card from "$lib/components/ui/card";
+	import * as Popover from "$lib/components/ui/popover";
 	import { Checkbox } from "$lib/components/ui/checkbox";
 	import Separator from "$lib/components/ui/separator/separator.svelte";
-	import * as Popover from "$lib/components/ui/popover";
-	import * as Command from "$lib/components/ui/command";
 	import {
 		Search,
 		Plus,
 		Code,
-		Calendar,
-		Clock,
-		Globe,
-		Lock,
-		ChevronDown,
 		Funnel,
 		X,
-		Copy,
-		Check,
-		Ellipsis,
-		Trash2,
-		SquarePen,
 		Tag,
+		ChevronDown,
 		ChevronLeft,
 		ChevronRight,
 		ChevronsLeft,
 		ChevronsRight,
-		ChevronsUpDownIcon,
-		CheckIcon,
 	} from "@lucide/svelte";
-
-	import { tick } from "svelte";
-	import { cn } from "$lib/utils";
+	import SnippetCard from "$lib/components/snippet-card.svelte";
+	import CreateSnippetDialog from "$lib/components/create-snippet-dialog.svelte";
 
 	interface Snippet {
 		id: number;
@@ -47,6 +29,7 @@
 		description: string;
 		code: string;
 		language: string;
+		languageColor: string | null;
 		tags: string[];
 		isPublic: boolean;
 		createdAt: string;
@@ -69,40 +52,25 @@
 	}
 
 	let createDialogOpen = $state(false);
-	let copiedId = $state<number | null>(null);
-
 	let languageSearch = $state("");
 	let tagsSearch = $state("");
 
-	let newSnippet = $state({
-		title: "",
-		description: "",
-		code: "",
-		language: "",
-		tags: "",
-		isPublic: false,
-	});
+	const data = $derived(page.data as PageData);
 
 	const filteredLanguages = $derived(
-		(page.data as PageData).languages.filter((lang) =>
+		data.languages.filter((lang) =>
 			lang.id.toLowerCase().includes(languageSearch.toLowerCase()),
 		),
 	);
 
 	const filteredAvailableTags = $derived(
-		(page.data as PageData).tags.filter((tag) =>
+		data.tags.filter((tag) =>
 			tag.name.toLowerCase().includes(tagsSearch.toLowerCase()),
 		),
 	);
 
 	const totalPages = $derived(
-		Math.max(
-			1,
-			Math.ceil(
-				(page.data as PageData).totalCount /
-					(page.data as PageData).pageSize,
-			),
-		),
+		Math.max(1, Math.ceil(data.totalCount / data.pageSize)),
 	);
 
 	function updateUrl(params: Record<string, string | null>) {
@@ -135,7 +103,7 @@
 	}
 
 	function toggleTag(tag: string) {
-		const current = (page.data as PageData).filters.tags;
+		const current = data.filters.tags;
 		const updated = current.includes(tag)
 			? current.filter((t: string) => t !== tag)
 			: [...current, tag];
@@ -152,68 +120,7 @@
 		goto(url.toString(), { keepFocus: true });
 	}
 
-	function formatDate(dateString: string): string {
-		const date = new Date(dateString);
-		return date.toLocaleDateString("en-US", {
-			month: "short",
-			day: "numeric",
-			year: "numeric",
-		});
-	}
-
-	function formatRelativeTime(dateString: string): string {
-		const date = new Date(dateString);
-		const now = new Date();
-		const diffMs = now.getTime() - date.getTime();
-		const diffMins = Math.floor(diffMs / 60000);
-		const diffHours = Math.floor(diffMins / 60);
-		const diffDays = Math.floor(diffHours / 24);
-
-		if (diffMins < 1) return "just now";
-		if (diffMins < 60) return `${diffMins}m ago`;
-		if (diffHours < 24) return `${diffHours}h ago`;
-		if (diffDays < 7) return `${diffDays}d ago`;
-		return formatDate(dateString);
-	}
-
-	function getLanguageColor(lang: string): string {
-		const colors: Record<string, string> = {
-			javascript:
-				"bg-yellow-500/20 text-yellow-600 dark:text-yellow-400 border-yellow-500/30",
-			typescript:
-				"bg-blue-500/20 text-blue-600 dark:text-blue-400 border-blue-500/30",
-			python: "bg-green-500/20 text-green-600 dark:text-green-400 border-green-500/30",
-			rust: "bg-orange-500/20 text-orange-600 dark:text-orange-400 border-orange-500/30",
-			go: "bg-cyan-500/20 text-cyan-600 dark:text-cyan-400 border-cyan-500/30",
-			java: "bg-red-500/20 text-red-600 dark:text-red-400 border-red-500/30",
-			"c++": "bg-purple-500/20 text-purple-600 dark:text-purple-400 border-purple-500/30",
-			csharp: "bg-violet-500/20 text-violet-600 dark:text-violet-400 border-violet-500/30",
-		};
-		return (
-			colors[lang.toLowerCase()] ||
-			"bg-gray-500/20 text-gray-600 dark:text-gray-400 border-gray-500/30"
-		);
-	}
-
-	function copyCode(id: number, code: string) {
-		navigator.clipboard.writeText(code);
-		copiedId = id;
-		setTimeout(() => {
-			copiedId = null;
-		}, 2000);
-	}
-
-	let createSnippetLangOpen = $state(false);
-
-	let triggerRef = $state<HTMLButtonElement>(null!);
-	function closeAndFocusTrigger() {
-		createSnippetLangOpen = false;
-		tick().then(() => {
-			triggerRef.focus();
-		});
-	}
-
-	let searchInput = $state((page.data as PageData).filters.search);
+	let searchInput = $state(data.filters.search);
 </script>
 
 <div class="flex flex-col h-full">
@@ -228,155 +135,14 @@
 				<div>
 					<h1 class="text-2xl font-bold tracking-tight">Snippets</h1>
 					<p class="text-sm text-muted-foreground">
-						{(page.data as PageData).totalCount} snippets
+						{data.totalCount} snippets
 					</p>
 				</div>
 			</div>
-			<Dialog.Root bind:open={createDialogOpen}>
-				<Dialog.Trigger>
-					<Button>
-						<Plus class="w-4 h-4" />
-						New Snippet
-					</Button>
-				</Dialog.Trigger>
-				<Dialog.Content
-					class="sm:max-w-[600px] max-h-[90vh] overflow-y-auto"
-				>
-					<Dialog.Header>
-						<Dialog.Title>Create New Snippet</Dialog.Title>
-						<Dialog.Description>
-							Add a new code snippet to your collection. Fill in
-							the details below.
-						</Dialog.Description>
-					</Dialog.Header>
-					<form method="POST" action="?/create">
-						<div class="grid gap-4 py-4">
-							<div class="grid gap-2">
-								<Label for="title">Title</Label>
-								<Input
-									id="title"
-									name="title"
-									placeholder="Debounce Function"
-									bind:value={newSnippet.title}
-								/>
-							</div>
-							<div class="grid gap-2">
-								<Label for="description">Description</Label>
-								<Textarea
-									id="description"
-									name="description"
-									placeholder="A brief description of what this snippet does..."
-									bind:value={newSnippet.description}
-									class="min-h-[80px]"
-								/>
-							</div>
-							<div class="grid gap-2">
-								<Label for="language">Language</Label>
-								<Popover.Root bind:open={createSnippetLangOpen}>
-									<Popover.Trigger bind:ref={triggerRef}>
-										{#snippet child({ props })}
-											<Button
-												variant="outline"
-												class="w-[200px] justify-between"
-												{...props}
-												role="combobox"
-												aria-expanded={createSnippetLangOpen}
-											>
-												{newSnippet.language ||
-													"Select a framework..."}
-												<ChevronsUpDownIcon
-													class="ms-2 size-4 shrink-0 opacity-50"
-												/>
-											</Button>
-										{/snippet}
-									</Popover.Trigger>
-									<Popover.Content class="w-[200px] p-0">
-										<Command.Root>
-											<Command.Input
-												placeholder="Search languages..."
-											/>
-											<Command.List>
-												<Command.Empty>
-													No languages found.
-												</Command.Empty>
-												<Command.Group>
-													{#each (page.data as PageData).languages as lang}
-														<Command.Item
-															value={lang.id}
-															onSelect={() => {
-																newSnippet.language =
-																	lang.id;
-																closeAndFocusTrigger();
-															}}
-														>
-															<CheckIcon
-																class={cn(
-																	"me-2 size-4",
-																	newSnippet.language !==
-																		lang.id &&
-																		"text-transparent",
-																)}
-															/>
-															{lang.id}
-														</Command.Item>
-													{/each}
-												</Command.Group>
-											</Command.List>
-										</Command.Root>
-									</Popover.Content>
-								</Popover.Root>
-							</div>
-							<div class="grid gap-2">
-								<Label for="tags">Tags (comma-separated)</Label>
-								<Input
-									id="tags"
-									name="tags"
-									placeholder="utils, hooks, api"
-									bind:value={newSnippet.tags}
-								/>
-							</div>
-							<div class="grid gap-2">
-								<Label for="code">Code</Label>
-								<Textarea
-									id="code"
-									name="code"
-									placeholder="Paste your code here..."
-									bind:value={newSnippet.code}
-									class="min-h-[200px] font-mono text-sm"
-								/>
-							</div>
-							<div class="flex items-center gap-2">
-								<Checkbox
-									id="isPublic"
-									name="isPublic"
-									bind:checked={newSnippet.isPublic}
-								/>
-								<Label
-									for="isPublic"
-									class="text-sm font-normal cursor-pointer"
-								>
-									Make this snippet public
-								</Label>
-							</div>
-						</div>
-						<Dialog.Footer>
-							<Button
-								variant="outline"
-								type="button"
-								onclick={() => (createDialogOpen = false)}
-							>
-								Cancel
-							</Button>
-							<Button
-								type="submit"
-								disabled={!newSnippet.title || !newSnippet.code}
-							>
-								Create Snippet
-							</Button>
-						</Dialog.Footer>
-					</form>
-				</Dialog.Content>
-			</Dialog.Root>
+			<Button onclick={() => (createDialogOpen = true)}>
+				<Plus class="w-4 h-4" />
+				New Snippet
+			</Button>
 		</div>
 
 		<div class="flex flex-col gap-3 sm:flex-row">
@@ -397,12 +163,12 @@
 						<Button variant="outline" class="gap-2 min-w-[140px]">
 							<Funnel class="w-4 h-4" />
 							Language
-							{#if (page.data as PageData).filters.language}
+							{#if data.filters.language}
 								<Badge
 									variant="secondary"
 									class="ml-1 px-1.5 py-0.5 text-xs capitalize"
 								>
-									{(page.data as PageData).filters.language}
+									{data.filters.language}
 								</Badge>
 							{:else}
 								<ChevronDown class="w-3.5 h-3.5 ml-auto" />
@@ -444,13 +210,12 @@
 						<Button variant="outline" class="gap-2 min-w-[140px]">
 							<Tag class="w-4 h-4" />
 							Tags
-							{#if (page.data as PageData).filters.tags.length > 0}
+							{#if data.filters.tags.length > 0}
 								<Badge
 									variant="secondary"
 									class="ml-1 px-1.5 py-0.5 text-xs"
 								>
-									{(page.data as PageData).filters.tags
-										.length}
+									{data.filters.tags.length}
 								</Badge>
 							{:else}
 								<ChevronDown class="w-3.5 h-3.5 ml-auto" />
@@ -464,12 +229,11 @@
 								bind:value={tagsSearch}
 								class="h-8"
 							/>
-							{#if (page.data as PageData).filters.tags.length > 1}
+							{#if data.filters.tags.length > 1}
 								<div class="flex gap-1">
 									<button
-										class="flex-1 text-xs py-1 px-2 rounded-sm transition-colors {(
-											page.data as PageData
-										).filters.tagsMatchMode === 'any'
+										class="flex-1 text-xs py-1 px-2 rounded-sm transition-colors {data
+											.filters.tagsMatchMode === 'any'
 											? 'bg-primary text-primary-foreground'
 											: 'bg-muted hover:bg-muted/80'}"
 										onclick={() => setTagsMatchMode("any")}
@@ -477,9 +241,8 @@
 										Any
 									</button>
 									<button
-										class="flex-1 text-xs py-1 px-2 rounded-sm transition-colors {(
-											page.data as PageData
-										).filters.tagsMatchMode === 'all'
+										class="flex-1 text-xs py-1 px-2 rounded-sm transition-colors {data
+											.filters.tagsMatchMode === 'all'
 											? 'bg-primary text-primary-foreground'
 											: 'bg-muted hover:bg-muted/80'}"
 										onclick={() => setTagsMatchMode("all")}
@@ -502,9 +265,9 @@
 										class="flex items-center gap-2 px-2 py-1.5 text-sm rounded-sm hover:bg-accent transition-colors cursor-pointer"
 									>
 										<Checkbox
-											checked={(
-												page.data as PageData
-											).filters.tags.includes(tag.name)}
+											checked={data.filters.tags.includes(
+												tag.name,
+											)}
 											onCheckedChange={() =>
 												toggleTag(tag.name)}
 										/>
@@ -516,7 +279,7 @@
 					</Popover.Content>
 				</Popover.Root>
 
-				{#if (page.data as PageData).filters.search || (page.data as PageData).filters.language || (page.data as PageData).filters.tags.length > 0}
+				{#if data.filters.search || data.filters.language || data.filters.tags.length > 0}
 					<Button variant="ghost" size="icon" onclick={clearFilters}>
 						<X class="w-4 h-4" />
 					</Button>
@@ -524,16 +287,16 @@
 			</div>
 		</div>
 
-		{#if (page.data as PageData).filters.tags.length > 0}
+		{#if data.filters.tags.length > 0}
 			<div class="flex flex-wrap gap-1.5 items-center">
-				{#if (page.data as PageData).filters.tags.length > 1}
+				{#if data.filters.tags.length > 1}
 					<span class="text-xs text-muted-foreground mr-1">
-						{(page.data as PageData).filters.tagsMatchMode === "all"
+						{data.filters.tagsMatchMode === "all"
 							? "All tags"
 							: "Any tag"}:
 					</span>
 				{/if}
-				{#each (page.data as PageData).filters.tags as tag}
+				{#each data.filters.tags as tag}
 					<Badge variant="secondary" class="gap-1 pr-1.5">
 						{tag}
 						<button
@@ -551,7 +314,7 @@
 	<Separator />
 
 	<main class="flex-1 overflow-auto p-6 pt-4">
-		{#if (page.data as PageData).snippets.length === 0}
+		{#if data.snippets.length === 0}
 			<div
 				class="flex flex-col items-center justify-center h-[50vh] text-center"
 			>
@@ -562,7 +325,7 @@
 				</div>
 				<h3 class="text-lg font-semibold mb-1">No snippets found</h3>
 				<p class="text-sm text-muted-foreground max-w-sm">
-					{#if (page.data as PageData).filters.search || (page.data as PageData).filters.language || (page.data as PageData).filters.tags.length > 0}
+					{#if data.filters.search || data.filters.language || data.filters.tags.length > 0}
 						Try adjusting your search or filters to find what you're
 						looking for.
 					{:else}
@@ -570,7 +333,7 @@
 						collection.
 					{/if}
 				</p>
-				{#if !(page.data as PageData).filters.search && !(page.data as PageData).filters.language && (page.data as PageData).filters.tags.length === 0}
+				{#if !data.filters.search && !data.filters.language && data.filters.tags.length === 0}
 					<Button
 						class="mt-4"
 						onclick={() => (createDialogOpen = true)}
@@ -584,131 +347,8 @@
 			<div
 				class="grid gap-4 sm:grid-cols-1 lg:grid-cols-2 xl:grid-cols-3"
 			>
-				{#each (page.data as PageData).snippets as snippet (snippet.id)}
-					<Card.Root
-						class="group relative flex flex-col overflow-hidden transition-all hover:shadow-md"
-					>
-						<Card.Header class="pb-3">
-							<div class="flex items-start justify-between gap-2">
-								<div class="flex-1 min-w-0">
-									<Card.Title class="truncate text-lg"
-										>{snippet.title}</Card.Title
-									>
-									{#if snippet.description}
-										<Card.Description
-											class="line-clamp-2 mt-1.5"
-										>
-											{snippet.description}
-										</Card.Description>
-									{/if}
-								</div>
-								<DropdownMenu.Root>
-									<DropdownMenu.Trigger>
-										<Button
-											variant="ghost"
-											size="icon"
-											class="opacity-0 group-hover:opacity-100 transition-opacity -mr-2 -mt-1"
-										>
-											<Ellipsis class="w-4 h-4" />
-										</Button>
-									</DropdownMenu.Trigger>
-									<DropdownMenu.Content align="end">
-										<DropdownMenu.Item>
-											<SquarePen class="w-4 h-4 mr-2" />
-											Edit
-										</DropdownMenu.Item>
-										<DropdownMenu.Separator />
-										<DropdownMenu.Item
-											class="text-destructive focus:text-destructive"
-										>
-											<Trash2 class="w-4 h-4 mr-2" />
-											Delete
-										</DropdownMenu.Item>
-									</DropdownMenu.Content>
-								</DropdownMenu.Root>
-							</div>
-						</Card.Header>
-						<Card.Content class="flex-1 flex flex-col gap-3">
-							<div
-								class="relative rounded-md bg-muted/50 overflow-hidden"
-							>
-								<pre
-									class="p-3 text-xs overflow-x-auto max-h-32 leading-relaxed"><code
-										class="font-mono"
-										>{snippet.code.slice(0, 300)}{snippet
-											.code.length > 300
-											? "..."
-											: ""}</code
-									></pre>
-								<div class="absolute top-2 right-2">
-									<Button
-										variant="secondary"
-										size="icon"
-										class="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
-										onclick={() =>
-											copyCode(snippet.id, snippet.code)}
-									>
-										{#if copiedId === snippet.id}
-											<Check
-												class="w-3.5 h-3.5 text-green-600"
-											/>
-										{:else}
-											<Copy class="w-3.5 h-3.5" />
-										{/if}
-									</Button>
-								</div>
-							</div>
-
-							<div class="flex flex-wrap gap-1.5">
-								<Badge
-									variant="outline"
-									class={getLanguageColor(snippet.language)}
-								>
-									{snippet.language}
-								</Badge>
-								{#each snippet.tags.slice(0, 3) as tag}
-									<Badge variant="secondary">{tag}</Badge>
-								{/each}
-								{#if snippet.tags.length > 3}
-									<Badge
-										variant="outline"
-										class="text-muted-foreground"
-									>
-										+{snippet.tags.length - 3}
-									</Badge>
-								{/if}
-							</div>
-						</Card.Content>
-						<Card.Footer class="pt-3 pb-4">
-							<div
-								class="flex items-center justify-between w-full text-xs text-muted-foreground"
-							>
-								<div class="flex items-center gap-3">
-									<span class="flex items-center gap-1">
-										<Calendar class="w-3 h-3" />
-										{formatDate(snippet.createdAt)}
-									</span>
-									<span class="flex items-center gap-1">
-										<Clock class="w-3 h-3" />
-										{formatRelativeTime(snippet.updatedAt)}
-									</span>
-								</div>
-								{#if snippet.isPublic}
-									<span
-										class="flex items-center gap-1 text-green-600 dark:text-green-400"
-									>
-										<Globe class="w-3 h-3" />
-										Public
-									</span>
-								{:else}
-									<span class="flex items-center gap-1">
-										<Lock class="w-3 h-3" />
-										Private
-									</span>
-								{/if}
-							</div>
-						</Card.Footer>
-					</Card.Root>
+				{#each data.snippets as snippet (snippet.id)}
+					<SnippetCard {snippet} />
 				{/each}
 			</div>
 
@@ -718,20 +358,17 @@
 				<div
 					class="flex items-center gap-2 text-sm text-muted-foreground"
 				>
-					<span
-						>Total: {(page.data as PageData).totalCount} snippets</span
-					>
+					<span>Total: {data.totalCount} snippets</span>
 				</div>
-
 				<div class="flex items-center gap-1">
 					<span class="text-sm text-muted-foreground mr-2">
-						Page {(page.data as PageData).page} of {totalPages}
+						Page {data.page} of {totalPages}
 					</span>
 					<Button
 						variant="outline"
 						size="icon"
 						class="h-8 w-8"
-						disabled={(page.data as PageData).page <= 1}
+						disabled={data.page <= 1}
 						onclick={() => goToPage(1)}
 					>
 						<ChevronsLeft class="w-4 h-4" />
@@ -740,9 +377,8 @@
 						variant="outline"
 						size="icon"
 						class="h-8 w-8"
-						disabled={(page.data as PageData).page <= 1}
-						onclick={() =>
-							goToPage((page.data as PageData).page - 1)}
+						disabled={data.page <= 1}
+						onclick={() => goToPage(data.page - 1)}
 					>
 						<ChevronLeft class="w-4 h-4" />
 					</Button>
@@ -750,9 +386,8 @@
 						variant="outline"
 						size="icon"
 						class="h-8 w-8"
-						disabled={(page.data as PageData).page >= totalPages}
-						onclick={() =>
-							goToPage((page.data as PageData).page + 1)}
+						disabled={data.page >= totalPages}
+						onclick={() => goToPage(data.page + 1)}
 					>
 						<ChevronRight class="w-4 h-4" />
 					</Button>
@@ -760,7 +395,7 @@
 						variant="outline"
 						size="icon"
 						class="h-8 w-8"
-						disabled={(page.data as PageData).page >= totalPages}
+						disabled={data.page >= totalPages}
 						onclick={() => goToPage(totalPages)}
 					>
 						<ChevronsRight class="w-4 h-4" />
@@ -770,3 +405,5 @@
 		{/if}
 	</main>
 </div>
+
+<CreateSnippetDialog bind:open={createDialogOpen} languages={data.languages} />
