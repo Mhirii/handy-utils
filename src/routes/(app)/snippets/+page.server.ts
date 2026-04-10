@@ -1,4 +1,5 @@
 import { fail, redirect } from "@sveltejs/kit"
+import { count, eq } from "drizzle-orm"
 import { superValidate } from "sveltekit-superforms"
 import { zod4 } from "sveltekit-superforms/adapters"
 import { db } from "$lib/server/db"
@@ -11,7 +12,7 @@ export const load: PageServerLoad = async ({ cookies, url }) => {
 	// if (!id) return redirect(307, "/snippets/public")
 
 	const pageParam = url.searchParams.get("page") || "1"
-	const sizeParam = url.searchParams.get("pageSize") || "12"
+	const sizeParam = url.searchParams.get("pageSize") || "6"
 	const searchParam = url.searchParams.get("q") || ""
 	const languageParam = url.searchParams.get("language") || ""
 	const tagsParam = url.searchParams.get("tags") || ""
@@ -20,7 +21,7 @@ export const load: PageServerLoad = async ({ cookies, url }) => {
 	let page = Number.parseInt(pageParam, 10)
 	if (Number.isNaN(page) || page < 1) page = 1
 	let size = Number.parseInt(sizeParam, 10)
-	if (Number.isNaN(size) || size < 1 || size > 50) size = 12
+	if (Number.isNaN(size) || size < 1 || size > 50) size = 6
 
 	const languageIds = languageParam
 		? languageParam.split(",").map((l) => l.trim())
@@ -29,83 +30,104 @@ export const load: PageServerLoad = async ({ cookies, url }) => {
 		? tagsParam.split(",").map((t) => t.trim())
 		: null
 
-	const snippetsResult = await db.query.snippets.findMany({
-		where: id ? { authorId: id } : { isPublic: true },
+	const snippetFilters = {
+		...(id ? { authorId: id } : { isPublic: true }),
+		AND: [
+			...(languageIds && languageIds.length > 0
+				? [{ languageId: { in: languageIds } }]
+				: []),
+			...(selectedTags && selectedTags.length > 0
+				? tagsMatchModeParam !== "all"
+					? [{ tags: { name: { in: selectedTags || [] } } }]
+					: selectedTags.map((tag) => ({ tags: { name: tag } }))
+				: []),
+		],
+		OR: [
+			{ title: { ilike: `%${searchParam}%` } },
+			{ description: { ilike: `%${searchParam}%` } },
+			{ code: { ilike: `%${searchParam}%` } },
+			{ languageId: { ilike: `%${searchParam}%` } },
+			{ tags: { name: { ilike: `%${searchParam}%` } } },
+		],
+	}
+
+	const snippetsResult = db.query.snippets.findMany({
+		where: snippetFilters,
 		with: {
 			tags: true,
 			language: true,
+			author: true,
 		},
 		orderBy: {
 			updatedAt: "desc",
 		},
 		limit: size,
 		offset: (page - 1) * size,
+		extras: {
+			total: db.$count(
+				snippets,
+				id ? eq(snippets.authorId, id) : eq(snippets.isPublic, true),
+			),
+		},
 	})
 
-	let filteredSnippets = snippetsResult
-
-	if (searchParam) {
-		const searchLower = searchParam.toLowerCase()
-		filteredSnippets = filteredSnippets.filter(
-			(s) =>
-				s.title.toLowerCase().includes(searchLower) ||
-				s.description.toLowerCase().includes(searchLower) ||
-				s.code.toLowerCase().includes(searchLower),
-		)
-	}
-
-	if (languageIds) {
-		filteredSnippets = filteredSnippets.filter(
-			(s) => s.languageId && languageIds.includes(s.languageId),
-		)
-	}
-
-	if (selectedTags && selectedTags.length > 0) {
-		filteredSnippets = filteredSnippets.filter((snippet) => {
-			const snippetTagNames = snippet.tags.map((t) => t.name)
-			if (tagsMatchModeParam === "all") {
-				return selectedTags.every((tag) => snippetTagNames.includes(tag))
-			}
-			return selectedTags.some((tag) => snippetTagNames.includes(tag))
+	const totalFiltered = db.query.snippets
+		.findMany({
+			where: snippetFilters,
+			columns: {
+				id: true,
+			},
 		})
-	}
+		.then((snippets) => snippets.length)
 
-	const [languagesResult, tagsResult] = await Promise.all([
-		db.query.languages.findMany({
-			columns: {
-				id: true,
-				extension: true,
-				color: true,
+	const languagesPromise = db.query.languages.findMany({
+		columns: {
+			id: true,
+			extension: true,
+			color: true,
+		},
+		where: {
+			snippets: {
+				title: { isNotNull: true },
+				...(id ? { authorId: id } : { isPublic: true }),
 			},
-		}),
-		db.query.tags.findMany({
-			columns: {
-				id: true,
-				name: true,
+		},
+	})
+	const tagsPromise = db.query.tags.findMany({
+		columns: {
+			id: true,
+			name: true,
+		},
+		where: {
+			snippets: {
+				title: { isNotNull: true },
+				...(id ? { authorId: id } : { isPublic: true }),
 			},
-		}),
-	])
+		},
+	})
 
-	const formattedSnippets = filteredSnippets.map((s) => ({
-		id: s.id,
-		title: s.title,
-		description: s.description,
-		code: s.code,
-		language: s.language?.id || "text",
-		languageColor: s.language?.color || null,
-		tags: s.tags.map((t) => t.name),
-		isPublic: s.isPublic,
-		createdAt: s.createdAt.toISOString(),
-		updatedAt: s.updatedAt.toISOString(),
-	}))
+	const formattedSnippets = snippetsResult.then((snippets) =>
+		snippets.map((s) => ({
+			id: s.id,
+			title: s.title,
+			description: s.description,
+			code: s.code,
+			language: s.language?.id || "text",
+			languageColor: s.language?.color || null,
+			tags: s.tags.map((t) => t.name),
+			isPublic: s.isPublic,
+			createdAt: s.createdAt.toISOString(),
+			updatedAt: s.updatedAt.toISOString(),
+		})),
+	)
 
 	return {
 		userId: id ? id : null,
 		form: await superValidate(zod4(newSnippetSchema)),
 		snippets: formattedSnippets,
-		languages: languagesResult,
-		tags: tagsResult,
-		totalCount: formattedSnippets.length,
+		languagesPromise,
+		tagsPromise,
+		totalCount: totalFiltered,
 		page,
 		pageSize: size,
 		filters: {

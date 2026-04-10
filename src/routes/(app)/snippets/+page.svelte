@@ -23,65 +23,39 @@
 	} from "@lucide/svelte";
 	import SnippetCard from "$lib/components/snippet-card.svelte";
 	import CreateSnippetDialog from "$lib/components/create-snippet-dialog.svelte";
+	import { type PageData } from "./$types";
 
-	import { newSnippetSchema, type NewSnippetSchema } from "./schema";
-	import {
-		type SuperValidated,
-		type Infer,
-		superForm,
-	} from "sveltekit-superforms";
-	import { zod4Client } from "sveltekit-superforms/adapters";
-
-	interface Snippet {
-		id: number;
-		title: string;
-		description: string;
-		code: string;
-		language?: string;
-		languageColor: string | null;
-		tags: string[];
-		isPublic: boolean;
-		createdAt: string;
-		updatedAt: string;
-	}
-
-	interface PageData {
-		userId: string | null;
-		form: SuperValidated<Infer<NewSnippetSchema>>;
-		snippets: Snippet[];
-		languages: { id: string; extension: string; color: string }[];
-		tags: { id: number; name: string }[];
-		totalCount: number;
-		page: number;
-		pageSize: number;
-		filters: {
-			search: string;
-			language: string;
-			tags: string[];
-			tagsMatchMode: "any" | "all";
-		};
-	}
+	import Skeleton from "$lib/components/ui/skeleton/skeleton.svelte";
+	import { Jellyfish } from "svelte-loading-spinners";
 
 	let createDialogOpen = $state(false);
 	let languageSearch = $state("");
 	let tagsSearch = $state("");
 
-	const data = $derived(page.data as PageData);
+	let loading = $state(true);
+	let { data }: { data: PageData } = $props();
+	data.snippets.then(() => (loading = false));
 
 	const filteredLanguages = $derived(
-		data.languages.filter((lang) =>
-			lang.id.toLowerCase().includes(languageSearch.toLowerCase()),
+		data.languagesPromise.then((languages) =>
+			languages.filter((lang) =>
+				lang.id.toLowerCase().includes(languageSearch.toLowerCase()),
+			),
 		),
 	);
 
 	const filteredAvailableTags = $derived(
-		data.tags.filter((tag) =>
-			tag.name.toLowerCase().includes(tagsSearch.toLowerCase()),
+		data.tagsPromise.then((tags) =>
+			tags.filter((tag) =>
+				tag.name.toLowerCase().includes(tagsSearch.toLowerCase()),
+			),
 		),
 	);
 
 	const totalPages = $derived(
-		Math.max(1, Math.ceil(data.totalCount / data.pageSize)),
+		data.totalCount.then((totalCount) =>
+			Math.max(1, Math.ceil(totalCount / data.pageSize)),
+		),
 	);
 
 	function updateUrl(params: Record<string, string | null>) {
@@ -141,17 +115,28 @@
 				<div
 					class="flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10"
 				>
-					<Code class="w-5 h-5 text-primary" />
+					{#if loading}
+						<Jellyfish size="20" color="var(--primary)" />
+					{:else}
+						<Code class="w-5 h-5 text-primary" />
+					{/if}
 				</div>
 				<div>
 					<h1 class="text-2xl font-bold tracking-tight">Snippets</h1>
-					<p class="text-sm text-muted-foreground">
-						{data.totalCount} snippets
-					</p>
+					{#await data.totalCount}
+						<Skeleton class="w-28 h-5" />
+					{:then totalCount}
+						<p class="text-sm text-muted-foreground">
+							{totalCount} snippets
+						</p>
+					{/await}
 				</div>
 			</div>
 			{#if data.userId}
-				<Button onclick={() => (createDialogOpen = true)}>
+				<Button
+					onclick={() => (createDialogOpen = true)}
+					disabled={loading}
+				>
 					<Plus class="w-4 h-4" />
 					New Snippet
 				</Button>
@@ -173,12 +158,17 @@
 					placeholder="Search snippets..."
 					bind:value={searchInput}
 					oninput={() => setSearch(searchInput)}
+					disabled={loading}
 				/>
 			</div>
 			<div class="flex gap-2 flex-wrap sm:flex-nowrap">
 				<Popover.Root>
 					<Popover.Trigger>
-						<Button variant="outline" class="gap-2 min-w-[140px]">
+						<Button
+							variant="outline"
+							class="gap-2 min-w-[140px]"
+							disabled={loading}
+						>
 							<Funnel class="w-4 h-4" />
 							Language
 							{#if data.filters.language}
@@ -193,39 +183,45 @@
 							{/if}
 						</Button>
 					</Popover.Trigger>
-					<Popover.Content class="w-64 p-0" align="end">
-						<div class="p-2 border-b">
-							<Input
-								placeholder="Search languages..."
-								bind:value={languageSearch}
-								class="h-8"
-							/>
-						</div>
-						<div class="max-h-[240px] overflow-y-auto p-1">
-							<button
-								class="w-full text-left px-2 py-1.5 text-sm rounded-sm hover:bg-accent transition-colors"
-								onclick={() => {
-									setLanguage(null);
-									languageSearch = "";
-								}}
-							>
-								All Languages
-							</button>
-							{#each filteredLanguages as lang}
+					{#await filteredLanguages then languages}
+						<Popover.Content class="w-64 p-0" align="end">
+							<div class="p-2 border-b">
+								<Input
+									placeholder="Search languages..."
+									bind:value={languageSearch}
+									class="h-8"
+								/>
+							</div>
+							<div class="max-h-[240px] overflow-y-auto p-1">
 								<button
-									class="w-full text-left px-2 py-1.5 text-sm rounded-sm hover:bg-accent transition-colors capitalize"
-									onclick={() => setLanguage(lang.id)}
+									class="w-full text-left px-2 py-1.5 text-sm rounded-sm hover:bg-accent transition-colors"
+									onclick={() => {
+										setLanguage(null);
+										languageSearch = "";
+									}}
 								>
-									{lang.id}
+									All Languages
 								</button>
-							{/each}
-						</div>
-					</Popover.Content>
+								{#each languages as lang}
+									<button
+										class="w-full text-left px-2 py-1.5 text-sm rounded-sm hover:bg-accent transition-colors capitalize"
+										onclick={() => setLanguage(lang.id)}
+									>
+										{lang.id}
+									</button>
+								{/each}
+							</div>
+						</Popover.Content>
+					{/await}
 				</Popover.Root>
 
 				<Popover.Root>
 					<Popover.Trigger>
-						<Button variant="outline" class="gap-2 min-w-[140px]">
+						<Button
+							variant="outline"
+							class="gap-2 min-w-[140px]"
+							disabled={loading}
+						>
 							<Tag class="w-4 h-4" />
 							Tags
 							{#if data.filters.tags.length > 0}
@@ -271,28 +267,32 @@
 							{/if}
 						</div>
 						<div class="max-h-[200px] overflow-y-auto p-1">
-							{#if filteredAvailableTags.length === 0}
-								<p
-									class="text-sm text-muted-foreground px-2 py-4 text-center"
-								>
-									No tags found
-								</p>
-							{:else}
-								{#each filteredAvailableTags as tag}
-									<label
-										class="flex items-center gap-2 px-2 py-1.5 text-sm rounded-sm hover:bg-accent transition-colors cursor-pointer"
+							{#await filteredAvailableTags}
+								<Skeleton class="w-full h-8" />
+							{:then filteredAvailableTags}
+								{#if filteredAvailableTags.length === 0}
+									<p
+										class="text-sm text-muted-foreground px-2 py-4 text-center"
 									>
-										<Checkbox
-											checked={data.filters.tags.includes(
-												tag.name,
-											)}
-											onCheckedChange={() =>
-												toggleTag(tag.name)}
-										/>
-										<span>{tag.name}</span>
-									</label>
-								{/each}
-							{/if}
+										No tags found
+									</p>
+								{:else}
+									{#each filteredAvailableTags as tag}
+										<label
+											class="flex items-center gap-2 px-2 py-1.5 text-sm rounded-sm hover:bg-accent transition-colors cursor-pointer"
+										>
+											<Checkbox
+												checked={data.filters.tags.includes(
+													tag.name,
+												)}
+												onCheckedChange={() =>
+													toggleTag(tag.name)}
+											/>
+											<span>{tag.name}</span>
+										</label>
+									{/each}
+								{/if}
+							{/await}
 						</div>
 					</Popover.Content>
 				</Popover.Root>
@@ -332,115 +332,135 @@
 	<Separator />
 
 	<main class="flex-1 overflow-auto p-6 pt-4">
-		{#if data.snippets.length === 0}
-			<div
-				class="flex flex-col items-center justify-center h-[50vh] text-center"
-			>
-				<div
-					class="flex items-center justify-center w-16 h-16 rounded-full bg-muted mb-4"
-				>
-					<Code class="w-8 h-8 text-muted-foreground" />
-				</div>
-				<h3 class="text-lg font-semibold mb-1">No snippets found</h3>
-				<p class="text-sm text-muted-foreground max-w-sm">
-					{#if data.filters.search || data.filters.language || data.filters.tags.length > 0}
-						Try adjusting your search or filters to find what you're
-						looking for.
-					{:else if data.userId}
-						Create your first snippet to get started building your
-						collection.
-					{:else}
-						There seems to be no publicly published snippets yet.
-						You can login to create your first snippet.
-					{/if}
-				</p>
-				{#if !data.filters.search && !data.filters.language && data.filters.tags.length === 0}
-					{#if data.userId}
-						<Button
-							class="mt-4"
-							onclick={() => (createDialogOpen = true)}
-						>
-							<Plus class="w-4 h-4" />
-							Create Snippet
-						</Button>
-					{:else}
-						<Button
-							onclick={() => goto("/auth/login")}
-							class="mt-4"
-						>
-							<LogInIcon />
-							Login to Create Snippets
-						</Button>
-					{/if}
-				{/if}
-			</div>
-		{:else}
+		{#await data.snippets}
 			<div
 				class="grid gap-4 sm:grid-cols-1 lg:grid-cols-2 xl:grid-cols-3"
 			>
-				{#each data.snippets as snippet (snippet.id)}
-					<SnippetCard {snippet} />
-				{/each}
+				<Skeleton class="rounded-xl py-6 h-96" />
+				<Skeleton class="rounded-xl py-6 h-96" />
+				<Skeleton class="rounded-xl py-6 h-96" />
 			</div>
-
-			<div
-				class="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6 pt-4 border-t"
-			>
+		{:then snippets}
+			{#if snippets.length === 0}
 				<div
-					class="flex items-center gap-2 text-sm text-muted-foreground"
+					class="flex flex-col items-center justify-center h-[50vh] text-center"
 				>
-					<span>Total: {data.totalCount} snippets</span>
+					<div
+						class="flex items-center justify-center w-16 h-16 rounded-full bg-muted mb-4"
+					>
+						<Code class="w-8 h-8 text-muted-foreground" />
+					</div>
+					<h3 class="text-lg font-semibold mb-1">
+						No snippets found
+					</h3>
+					<p class="text-sm text-muted-foreground max-w-sm">
+						{#if data.filters.search || data.filters.language || data.filters.tags.length > 0}
+							Try adjusting your search or filters to find what
+							you're looking for.
+						{:else if data.userId}
+							Create your first snippet to get started building
+							your collection.
+						{:else}
+							There seems to be no publicly published snippets
+							yet. You can login to create your first snippet.
+						{/if}
+					</p>
+					{#if !data.filters.search && !data.filters.language && data.filters.tags.length === 0}
+						{#if data.userId}
+							<Button
+								class="mt-4"
+								onclick={() => (createDialogOpen = true)}
+							>
+								<Plus class="w-4 h-4" />
+								Create Snippet
+							</Button>
+						{:else}
+							<Button
+								onclick={() => goto("/auth/login")}
+								class="mt-4"
+							>
+								<LogInIcon />
+								Login to Create Snippets
+							</Button>
+						{/if}
+					{/if}
 				</div>
-				<div class="flex items-center gap-1">
-					<span class="text-sm text-muted-foreground mr-2">
-						Page {data.page} of {totalPages}
-					</span>
-					<Button
-						variant="outline"
-						size="icon"
-						class="h-8 w-8"
-						disabled={data.page <= 1}
-						onclick={() => goToPage(1)}
-					>
-						<ChevronsLeft class="w-4 h-4" />
-					</Button>
-					<Button
-						variant="outline"
-						size="icon"
-						class="h-8 w-8"
-						disabled={data.page <= 1}
-						onclick={() => goToPage(data.page - 1)}
-					>
-						<ChevronLeft class="w-4 h-4" />
-					</Button>
-					<Button
-						variant="outline"
-						size="icon"
-						class="h-8 w-8"
-						disabled={data.page >= totalPages}
-						onclick={() => goToPage(data.page + 1)}
-					>
-						<ChevronRight class="w-4 h-4" />
-					</Button>
-					<Button
-						variant="outline"
-						size="icon"
-						class="h-8 w-8"
-						disabled={data.page >= totalPages}
-						onclick={() => goToPage(totalPages)}
-					>
-						<ChevronsRight class="w-4 h-4" />
-					</Button>
+			{:else}
+				<div
+					class="grid gap-4 sm:grid-cols-1 lg:grid-cols-2 xl:grid-cols-3"
+				>
+					{#each snippets as snippet (snippet.id)}
+						<SnippetCard {snippet} />
+					{/each}
 				</div>
-			</div>
-		{/if}
+
+				{#await Promise.all([data.totalCount, totalPages])}
+					<Skeleton class="w-full h-8" />
+				{:then [totalCount, resolvedTotalPages]}
+					<div
+						class="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6 pt-4 border-t"
+					>
+						<div
+							class="flex items-center gap-2 text-sm text-muted-foreground"
+						>
+							<span>Total: {totalCount} snippets</span>
+						</div>
+						<div class="flex items-center gap-1">
+							<span class="text-sm text-muted-foreground mr-2">
+								Page {data.page} of {resolvedTotalPages}
+							</span>
+							<Button
+								variant="outline"
+								size="icon"
+								class="h-8 w-8"
+								disabled={data.page <= 1}
+								onclick={() => goToPage(1)}
+							>
+								<ChevronsLeft class="w-4 h-4" />
+							</Button>
+							<Button
+								variant="outline"
+								size="icon"
+								class="h-8 w-8"
+								disabled={data.page <= 1}
+								onclick={() => goToPage(data.page - 1)}
+							>
+								<ChevronLeft class="w-4 h-4" />
+							</Button>
+							<Button
+								variant="outline"
+								size="icon"
+								class="h-8 w-8"
+								disabled={data.page >= resolvedTotalPages}
+								onclick={() => goToPage(data.page + 1)}
+							>
+								<ChevronRight class="w-4 h-4" />
+							</Button>
+							<Button
+								variant="outline"
+								size="icon"
+								class="h-8 w-8"
+								disabled={data.page >= resolvedTotalPages}
+								onclick={() => goToPage(resolvedTotalPages)}
+							>
+								<ChevronsRight class="w-4 h-4" />
+							</Button>
+						</div>
+					</div>
+				{/await}
+			{/if}
+		{/await}
 	</main>
 </div>
 
 {#if data.userId}
-	<CreateSnippetDialog
-		bind:open={createDialogOpen}
-		languages={data.languages}
-		form={data.form}
-	/>
+	{#await data.languagesPromise}
+		<div></div>
+	{:then languages}
+		<CreateSnippetDialog
+			bind:open={createDialogOpen}
+			{languages}
+			form={data.form}
+		/>
+	{/await}
 {/if}
