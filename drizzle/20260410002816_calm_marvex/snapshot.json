@@ -1,7 +1,7 @@
 {
   "version": "8",
   "dialect": "postgres",
-  "id": "4816d6bf-00b0-4208-b3b2-039625a39ba9",
+  "id": "6fad8352-b66c-42c4-9ca4-daf1b73875be",
   "prevIds": [
     "00000000-0000-0000-0000-000000000000"
   ],
@@ -37,19 +37,6 @@
       "schema": "public"
     },
     {
-      "type": "serial",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "id",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "languages"
-    },
-    {
       "type": "text",
       "typeSchema": null,
       "notNull": true,
@@ -57,7 +44,7 @@
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "name",
+      "name": "id",
       "entityType": "columns",
       "schema": "public",
       "table": "languages"
@@ -310,19 +297,6 @@
       "table": "tags"
     },
     {
-      "type": "integer",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "snippet_id",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "tags"
-    },
-    {
       "type": "timestamp",
       "typeSchema": null,
       "notNull": true,
@@ -407,6 +381,40 @@
       "entityType": "fks",
       "schema": "public",
       "table": "snippet_tags"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "author_id"
+      ],
+      "schemaTo": "public",
+      "tableTo": "users",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "NO ACTION",
+      "name": "snippets_author_id_users_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "snippets"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "language_id"
+      ],
+      "schemaTo": "public",
+      "tableTo": "languages",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "NO ACTION",
+      "name": "snippets_language_id_languages_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "snippets"
     },
     {
       "columns": [

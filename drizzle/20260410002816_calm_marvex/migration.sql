@@ -1,6 +1,5 @@
 CREATE TABLE "languages" (
-	"id" serial PRIMARY KEY,
-	"name" text NOT NULL,
+	"id" text PRIMARY KEY,
 	"extension" text NOT NULL,
 	"color" text NOT NULL,
 	"created_at" timestamp DEFAULT now() NOT NULL
@@ -30,7 +29,6 @@ CREATE TABLE "snippets" (
 CREATE TABLE "tags" (
 	"id" serial PRIMARY KEY,
 	"name" text NOT NULL,
-	"snippet_id" integer NOT NULL,
 	"created_at" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
@@ -41,4 +39,6 @@ CREATE TABLE "users" (
 );
 --> statement-breakpoint
 ALTER TABLE "snippet_tags" ADD CONSTRAINT "snippet_tags_snippet_id_snippets_id_fkey" FOREIGN KEY ("snippet_id") REFERENCES "snippets"("id");--> statement-breakpoint
-ALTER TABLE "snippet_tags" ADD CONSTRAINT "snippet_tags_tag_id_tags_id_fkey" FOREIGN KEY ("tag_id") REFERENCES "tags"("id");
+ALTER TABLE "snippet_tags" ADD CONSTRAINT "snippet_tags_tag_id_tags_id_fkey" FOREIGN KEY ("tag_id") REFERENCES "tags"("id");--> statement-breakpoint
+ALTER TABLE "snippets" ADD CONSTRAINT "snippets_author_id_users_id_fkey" FOREIGN KEY ("author_id") REFERENCES "users"("id");--> statement-breakpoint
+ALTER TABLE "snippets" ADD CONSTRAINT "snippets_language_id_languages_id_fkey" FOREIGN KEY ("language_id") REFERENCES "languages"("id");

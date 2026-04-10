@@ -32,9 +32,6 @@ export const snippets = pgTable("snippets", {
 export const tags = pgTable("tags", {
 	id: serial("id").primaryKey(),
 	name: text("name").notNull(),
-	snippetId: integer("snippet_id")
-		.notNull()
-		.references(() => snippets.id),
 	createdAt: timestamp("created_at").notNull().defaultNow(),
 })
 
@@ -54,8 +51,7 @@ export const snippetTags = pgTable(
 )
 
 export const languages = pgTable("languages", {
-	id: serial("id").primaryKey(),
-	name: text("name").notNull(),
+	id: text("id").primaryKey(),
 	extension: text("extension").notNull(),
 	color: text("color").notNull(),
 	createdAt: timestamp("created_at").notNull().defaultNow(),

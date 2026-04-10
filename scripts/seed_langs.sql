@@ -1,4 +1,4 @@
-INSERT INTO languages (name, extension, color) VALUES
+INSERT INTO languages (id, extension, color) VALUES
 ('1c', '.bsl', '#e8512a'),
 ('abnf', '.abnf', '#6d8086'),
 ('accesslog', '.log', '#6d8086'),

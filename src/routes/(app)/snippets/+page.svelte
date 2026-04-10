@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { page } from "$app/state";
+	import { goto } from "$app/navigation";
 	import { Button } from "$lib/components/ui/button";
 	import { Input } from "$lib/components/ui/input";
 	import { Textarea } from "$lib/components/ui/textarea";
@@ -9,6 +11,7 @@
 	import * as Card from "$lib/components/ui/card";
 	import { Checkbox } from "$lib/components/ui/checkbox";
 	import Separator from "$lib/components/ui/separator/separator.svelte";
+	import * as Popover from "$lib/components/ui/popover";
 	import {
 		Search,
 		Plus,
@@ -25,257 +28,123 @@
 		MoreHorizontal,
 		Trash2,
 		Edit,
-		ExternalLink,
 		Tag,
+		ChevronLeft,
+		ChevronRight,
+		ChevronsLeft,
+		ChevronsRight,
 	} from "@lucide/svelte";
 
 	interface Snippet {
-		id: string;
+		id: number;
 		title: string;
 		description: string;
 		code: string;
 		language: string;
 		tags: string[];
 		isPublic: boolean;
-		created_at: string;
-		updated_at: string;
+		createdAt: string;
+		updatedAt: string;
 	}
 
-	let searchQuery = $state("");
-	let selectedLanguage = $state<string | null>(null);
-	let selectedTags = $state<string[]>([]);
-	let showPublicOnly = $state(false);
+	interface PageData {
+		snippets: Snippet[];
+		languages: { id: string; extension: string; color: string }[];
+		tags: { id: number; name: string }[];
+		totalCount: number;
+		page: number;
+		pageSize: number;
+		filters: {
+			search: string;
+			language: string;
+			tags: string[];
+			tagsMatchMode: "any" | "all";
+		};
+	}
 
 	let createDialogOpen = $state(false);
-	let copiedId = $state<string | null>(null);
+	let copiedId = $state<number | null>(null);
+
+	let languageSearch = $state("");
+	let tagsSearch = $state("");
 
 	let newSnippet = $state({
 		title: "",
 		description: "",
 		code: "",
-		language: "javascript",
+		language: "",
 		tags: "",
 		isPublic: false,
 	});
 
-	const languages = [
-		"javascript",
-		"typescript",
-		"python",
-		"rust",
-		"go",
-		"java",
-		"c++",
-		"csharp",
-		"ruby",
-		"php",
-		"swift",
-		"kotlin",
-		"sql",
-		"bash",
-		"html",
-		"css",
-	];
-
-	const allTags = [
-		"utils",
-		"api",
-		"hooks",
-		"components",
-		"algorithms",
-		"config",
-		"auth",
-		"database",
-		"testing",
-		"optimization",
-	];
-
-	let snippets = $state<Snippet[]>([
-		{
-			id: "1",
-			title: "Debounce Function",
-			description:
-				"A utility function to limit the rate at which a function can fire. Useful for search inputs and resize handlers.",
-			code: `function debounce<T extends (...args: any[]) => any>(
-  func: T,
-  wait: number
-): (...args: Parameters<T>) => void {
-  let timeoutId: ReturnType<typeof setTimeout> | null = null;
-
-  return function (this: any, ...args: Parameters<T>) {
-    if (timeoutId) clearTimeout(timeoutId);
-    timeoutId = setTimeout(() => func.apply(this, args), wait);
-  };
-}`,
-			language: "typescript",
-			tags: ["utils", "hooks"],
-			isPublic: true,
-			created_at: "2024-03-15T10:30:00Z",
-			updated_at: "2024-03-15T10:30:00Z",
-		},
-		{
-			id: "2",
-			title: "Fetch with Retry",
-			description:
-				"Enhanced fetch wrapper with automatic retry logic for failed network requests.",
-			code: `async function fetchWithRetry(
-  url: string,
-  options: RequestInit = {},
-  retries = 3,
-  delay = 1000
-): Promise<Response> {
-  for (let i = 0; i < retries; i++) {
-    try {
-      const response = await fetch(url, options);
-      if (!response.ok) throw new Error(\`HTTP \${response.status}\`);
-      return response;
-    } catch (error) {
-      if (i === retries - 1) throw error;
-      await new Promise(r => setTimeout(r, delay * Math.pow(2, i)));
-    }
-  }
-  throw new Error('Max retries reached');
-}`,
-			language: "typescript",
-			tags: ["utils", "api"],
-			isPublic: true,
-			created_at: "2024-03-10T14:20:00Z",
-			updated_at: "2024-03-12T09:15:00Z",
-		},
-		{
-			id: "3",
-			title: "useLocalStorage Hook",
-			description:
-				"React hook for persisting state in localStorage with automatic serialization.",
-			code: `function useLocalStorage<T>(key: string, initialValue: T) {
-  const [storedValue, setStoredValue] = useState<T>(() => {
-    try {
-      const item = window.localStorage.getItem(key);
-      return item ? JSON.parse(item) : initialValue;
-    } catch {
-      return initialValue;
-    }
-  });
-
-  const setValue = (value: T | ((val: T) => T)) => {
-    const valueToStore = value instanceof Function ? value(storedValue) : value;
-    setStoredValue(valueToStore);
-    window.localStorage.setItem(key, JSON.stringify(valueToStore));
-  };
-
-  return [storedValue, setValue] as const;
-}`,
-			language: "typescript",
-			tags: ["hooks", "utils"],
-			isPublic: false,
-			created_at: "2024-02-28T16:45:00Z",
-			updated_at: "2024-02-28T16:45:00Z",
-		},
-		{
-			id: "4",
-			title: "Binary Search",
-			description:
-				"Efficient O(log n) search algorithm for sorted arrays.",
-			code: `function binarySearch<T>(arr: T[], target: T): number {
-  let left = 0;
-  let right = arr.length - 1;
-
-  while (left <= right) {
-    const mid = Math.floor((left + right) / 2);
-
-    if (arr[mid] === target) return mid;
-    if (arr[mid] < target) left = mid + 1;
-    else right = mid - 1;
-  }
-
-  return -1;
-}`,
-			language: "typescript",
-			tags: ["algorithms"],
-			isPublic: true,
-			created_at: "2024-02-20T08:00:00Z",
-			updated_at: "2024-02-25T11:30:00Z",
-		},
-		{
-			id: "5",
-			title: "Deep Clone Object",
-			description:
-				"Utility to create a deep copy of an object, handling circular references.",
-			code: `function deepClone<T>(obj: T, seen = new WeakMap()): T {
-  if (obj === null || typeof obj !== 'object') return obj;
-  if (seen.has(obj)) return seen.get(obj);
-
-  const clone = Array.isArray(obj) ? [] : {};
-  seen.set(obj, clone);
-
-  for (const key of Object.keys(obj)) {
-    (clone as any)[key] = deepClone((obj as any)[key], seen);
-  }
-
-  return clone;
-}`,
-			language: "typescript",
-			tags: ["utils"],
-			isPublic: true,
-			created_at: "2024-01-15T13:20:00Z",
-			updated_at: "2024-01-15T13:20:00Z",
-		},
-		{
-			id: "6",
-			title: "JWT Decode",
-			description: "Simple JWT token decoder without verification.",
-			code: `function decodeJWT(token: string): { header: any; payload: any } | null {
-  try {
-    const [header, payload] = token.split('.');
-    const decoded = JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/')));
-    return { header: JSON.parse(atob(header)), payload: decoded };
-  } catch {
-    return null;
-  }
-}`,
-			language: "javascript",
-			tags: ["auth", "utils"],
-			isPublic: false,
-			created_at: "2024-03-05T09:00:00Z",
-			updated_at: "2024-03-05T09:00:00Z",
-		},
-	]);
-
-	const filteredSnippets = $derived(
-		snippets.filter((snippet) => {
-			const matchesSearch =
-				searchQuery === "" ||
-				snippet.title
-					.toLowerCase()
-					.includes(searchQuery.toLowerCase()) ||
-				snippet.description
-					.toLowerCase()
-					.includes(searchQuery.toLowerCase()) ||
-				snippet.code.toLowerCase().includes(searchQuery.toLowerCase());
-
-			const matchesLanguage =
-				selectedLanguage === null ||
-				snippet.language === selectedLanguage;
-
-			const matchesTags =
-				selectedTags.length === 0 ||
-				selectedTags.some((tag) => snippet.tags.includes(tag));
-
-			const matchesPublic = !showPublicOnly || snippet.isPublic;
-
-			return (
-				matchesSearch && matchesLanguage && matchesTags && matchesPublic
-			);
-		}),
+	const filteredLanguages = $derived(
+		(page.data as PageData).languages.filter((lang) =>
+			lang.id.toLowerCase().includes(languageSearch.toLowerCase()),
+		),
 	);
 
-	const availableTags = $derived(
-		[...new Set(snippets.flatMap((s) => s.tags))].sort(),
+	const filteredAvailableTags = $derived(
+		(page.data as PageData).tags.filter((tag) =>
+			tag.name.toLowerCase().includes(tagsSearch.toLowerCase()),
+		),
 	);
 
-	const availableLanguages = $derived(
-		[...new Set(snippets.map((s) => s.language))].sort(),
+	const totalPages = $derived(
+		Math.max(
+			1,
+			Math.ceil(
+				(page.data as PageData).totalCount /
+					(page.data as PageData).pageSize,
+			),
+		),
 	);
+
+	function updateUrl(params: Record<string, string | null>) {
+		const url = new URL(page.url);
+		for (const [key, value] of Object.entries(params)) {
+			if (value === null || value === "") {
+				url.searchParams.delete(key);
+			} else {
+				url.searchParams.set(key, value);
+			}
+		}
+		url.searchParams.delete("page");
+		goto(url.toString(), { keepFocus: true });
+	}
+
+	function setSearch(value: string) {
+		updateUrl({ q: value || null });
+	}
+
+	function setLanguage(lang: string | null) {
+		updateUrl({ language: lang || null });
+	}
+
+	function setTags(tags: string[]) {
+		updateUrl({ tags: tags.length > 0 ? tags.join(",") : null });
+	}
+
+	function setTagsMatchMode(mode: "any" | "all") {
+		updateUrl({ tagsMatchMode: mode });
+	}
+
+	function toggleTag(tag: string) {
+		const current = (page.data as PageData).filters.tags;
+		const updated = current.includes(tag)
+			? current.filter((t: string) => t !== tag)
+			: [...current, tag];
+		setTags(updated);
+	}
+
+	function clearFilters() {
+		goto(page.url.pathname, { keepFocus: true });
+	}
+
+	function goToPage(pageNum: number) {
+		const url = new URL(page.url);
+		url.searchParams.set("page", String(pageNum));
+		goto(url.toString(), { keepFocus: true });
+	}
 
 	function formatDate(dateString: string): string {
 		const date = new Date(dateString);
@@ -320,7 +189,7 @@
 		);
 	}
 
-	function copyCode(id: string, code: string) {
+	function copyCode(id: number, code: string) {
 		navigator.clipboard.writeText(code);
 		copiedId = id;
 		setTimeout(() => {
@@ -328,51 +197,7 @@
 		}, 2000);
 	}
 
-	function clearFilters() {
-		searchQuery = "";
-		selectedLanguage = null;
-		selectedTags = [];
-		showPublicOnly = false;
-	}
-
-	function toggleTag(tag: string) {
-		if (selectedTags.includes(tag)) {
-			selectedTags = selectedTags.filter((t) => t !== tag);
-		} else {
-			selectedTags = [...selectedTags, tag];
-		}
-	}
-
-	function createSnippet() {
-		const newSnippetObj: Snippet = {
-			id: Date.now().toString(),
-			title: newSnippet.title,
-			description: newSnippet.description,
-			code: newSnippet.code,
-			language: newSnippet.language,
-			tags: newSnippet.tags
-				.split(",")
-				.map((t) => t.trim())
-				.filter(Boolean),
-			isPublic: newSnippet.isPublic,
-			created_at: new Date().toISOString(),
-			updated_at: new Date().toISOString(),
-		};
-		snippets = [newSnippetObj, ...snippets];
-		createDialogOpen = false;
-		newSnippet = {
-			title: "",
-			description: "",
-			code: "",
-			language: "javascript",
-			tags: "",
-			isPublic: false,
-		};
-	}
-
-	function deleteSnippet(id: string) {
-		snippets = snippets.filter((s) => s.id !== id);
-	}
+	let searchInput = $state((page.data as PageData).filters.search);
 </script>
 
 <div class="flex flex-col h-full">
@@ -387,7 +212,7 @@
 				<div>
 					<h1 class="text-2xl font-bold tracking-tight">Snippets</h1>
 					<p class="text-sm text-muted-foreground">
-						{filteredSnippets.length} of {snippets.length} snippets
+						{(page.data as PageData).totalCount} snippets
 					</p>
 				</div>
 			</div>
@@ -408,80 +233,91 @@
 							the details below.
 						</Dialog.Description>
 					</Dialog.Header>
-					<div class="grid gap-4 py-4">
-						<div class="grid gap-2">
-							<Label for="title">Title</Label>
-							<Input
-								id="title"
-								placeholder="Debounce Function"
-								bind:value={newSnippet.title}
-							/>
+					<form method="POST" action="?/create">
+						<div class="grid gap-4 py-4">
+							<div class="grid gap-2">
+								<Label for="title">Title</Label>
+								<Input
+									id="title"
+									name="title"
+									placeholder="Debounce Function"
+									bind:value={newSnippet.title}
+								/>
+							</div>
+							<div class="grid gap-2">
+								<Label for="description">Description</Label>
+								<Textarea
+									id="description"
+									name="description"
+									placeholder="A brief description of what this snippet does..."
+									bind:value={newSnippet.description}
+									class="min-h-[80px]"
+								/>
+							</div>
+							<div class="grid gap-2">
+								<Label for="language">Language</Label>
+								<select
+									id="language"
+									name="language"
+									class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+									bind:value={newSnippet.language}
+								>
+									{#each (page.data as PageData).languages as lang}
+										<option value={lang.id}
+											>{lang.id}</option
+										>
+									{/each}
+								</select>
+							</div>
+							<div class="grid gap-2">
+								<Label for="tags">Tags (comma-separated)</Label>
+								<Input
+									id="tags"
+									name="tags"
+									placeholder="utils, hooks, api"
+									bind:value={newSnippet.tags}
+								/>
+							</div>
+							<div class="grid gap-2">
+								<Label for="code">Code</Label>
+								<Textarea
+									id="code"
+									name="code"
+									placeholder="Paste your code here..."
+									bind:value={newSnippet.code}
+									class="min-h-[200px] font-mono text-sm"
+								/>
+							</div>
+							<div class="flex items-center gap-2">
+								<Checkbox
+									id="isPublic"
+									name="isPublic"
+									bind:checked={newSnippet.isPublic}
+								/>
+								<Label
+									for="isPublic"
+									class="text-sm font-normal cursor-pointer"
+								>
+									Make this snippet public
+								</Label>
+							</div>
 						</div>
-						<div class="grid gap-2">
-							<Label for="description">Description</Label>
-							<Textarea
-								id="description"
-								placeholder="A brief description of what this snippet does..."
-								bind:value={newSnippet.description}
-								class="min-h-[80px]"
-							/>
-						</div>
-						<div class="grid gap-2">
-							<Label for="language">Language</Label>
-							<select
-								id="language"
-								class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-								bind:value={newSnippet.language}
+						<Dialog.Footer>
+							<Button
+								variant="outline"
+								type="button"
+								onclick={() => (createDialogOpen = false)}
 							>
-								{#each languages as lang}
-									<option value={lang}>{lang}</option>
-								{/each}
-							</select>
-						</div>
-						<div class="grid gap-2">
-							<Label for="tags">Tags (comma-separated)</Label>
-							<Input
-								id="tags"
-								placeholder="utils, hooks, api"
-								bind:value={newSnippet.tags}
-							/>
-						</div>
-						<div class="grid gap-2">
-							<Label for="code">Code</Label>
-							<Textarea
-								id="code"
-								placeholder="Paste your code here..."
-								bind:value={newSnippet.code}
-								class="min-h-[200px] font-mono text-sm"
-							/>
-						</div>
-						<div class="flex items-center gap-2">
-							<Checkbox
-								id="isPublic"
-								bind:checked={newSnippet.isPublic}
-							/>
-							<Label
-								for="isPublic"
-								class="text-sm font-normal cursor-pointer"
+								Cancel
+							</Button>
+							<Button
+								type="submit"
+								disabled={!newSnippet.title || !newSnippet.code}
 							>
-								Make this snippet public
-							</Label>
-						</div>
-					</div>
-					<Dialog.Footer>
-						<Button
-							variant="outline"
-							onclick={() => (createDialogOpen = false)}
-						>
-							Cancel
-						</Button>
-						<Button
-							onclick={createSnippet}
-							disabled={!newSnippet.title || !newSnippet.code}
-						>
-							Create Snippet
-						</Button>
-					</Dialog.Footer>
+								Create Snippet
+							</Button>
+						</Dialog.Footer>
+					</form>
 				</Dialog.Content>
 			</Dialog.Root>
 		</div>
@@ -494,83 +330,136 @@
 				<Input
 					class="pl-9"
 					placeholder="Search snippets..."
-					bind:value={searchQuery}
+					bind:value={searchInput}
+					oninput={() => setSearch(searchInput)}
 				/>
 			</div>
 			<div class="flex gap-2 flex-wrap sm:flex-nowrap">
-				<DropdownMenu.Root>
-					<DropdownMenu.Trigger>
-						<Button variant="outline" class="gap-2">
+				<Popover.Root>
+					<Popover.Trigger>
+						<Button variant="outline" class="gap-2 min-w-[140px]">
 							<Filter class="w-4 h-4" />
 							Language
-							{#if selectedLanguage}
+							{#if (page.data as PageData).filters.language}
 								<Badge
 									variant="secondary"
-									class="ml-1 px-1.5 py-0.5 text-xs"
+									class="ml-1 px-1.5 py-0.5 text-xs capitalize"
 								>
-									{selectedLanguage}
+									{(page.data as PageData).filters.language}
 								</Badge>
 							{:else}
-								<ChevronDown class="w-3.5 h-3.5" />
+								<ChevronDown class="w-3.5 h-3.5 ml-auto" />
 							{/if}
 						</Button>
-					</DropdownMenu.Trigger>
-					<DropdownMenu.Content align="end" class="w-48">
-						<DropdownMenu.Item
-							onclick={() => (selectedLanguage = null)}
-						>
-							All Languages
-						</DropdownMenu.Item>
-						<DropdownMenu.Separator />
-						{#each availableLanguages as lang}
-							<DropdownMenu.Item
-								onclick={() => (selectedLanguage = lang)}
+					</Popover.Trigger>
+					<Popover.Content class="w-64 p-0" align="end">
+						<div class="p-2 border-b">
+							<Input
+								placeholder="Search languages..."
+								bind:value={languageSearch}
+								class="h-8"
+							/>
+						</div>
+						<div class="max-h-[240px] overflow-y-auto p-1">
+							<button
+								class="w-full text-left px-2 py-1.5 text-sm rounded-sm hover:bg-accent transition-colors"
+								onclick={() => {
+									setLanguage(null);
+									languageSearch = "";
+								}}
 							>
-								<span class="capitalize">{lang}</span>
-							</DropdownMenu.Item>
-						{/each}
-					</DropdownMenu.Content>
-				</DropdownMenu.Root>
+								All Languages
+							</button>
+							{#each filteredLanguages as lang}
+								<button
+									class="w-full text-left px-2 py-1.5 text-sm rounded-sm hover:bg-accent transition-colors capitalize"
+									onclick={() => setLanguage(lang.id)}
+								>
+									{lang.id}
+								</button>
+							{/each}
+						</div>
+					</Popover.Content>
+				</Popover.Root>
 
-				<DropdownMenu.Root>
-					<DropdownMenu.Trigger>
-						<Button variant="outline" class="gap-2">
+				<Popover.Root>
+					<Popover.Trigger>
+						<Button variant="outline" class="gap-2 min-w-[140px]">
 							<Tag class="w-4 h-4" />
 							Tags
-							{#if selectedTags.length > 0}
+							{#if (page.data as PageData).filters.tags.length > 0}
 								<Badge
 									variant="secondary"
 									class="ml-1 px-1.5 py-0.5 text-xs"
 								>
-									{selectedTags.length}
+									{(page.data as PageData).filters.tags
+										.length}
 								</Badge>
 							{:else}
-								<ChevronDown class="w-3.5 h-3.5" />
+								<ChevronDown class="w-3.5 h-3.5 ml-auto" />
 							{/if}
 						</Button>
-					</DropdownMenu.Trigger>
-					<DropdownMenu.Content align="end" class="w-48">
-						{#each availableTags as tag}
-							<DropdownMenu.CheckboxItem
-								checked={selectedTags.includes(tag)}
-								onCheckedChange={() => toggleTag(tag)}
-							>
-								{tag}
-							</DropdownMenu.CheckboxItem>
-						{/each}
-					</DropdownMenu.Content>
-				</DropdownMenu.Root>
+					</Popover.Trigger>
+					<Popover.Content class="w-72 p-0" align="end">
+						<div class="p-2 border-b space-y-2">
+							<Input
+								placeholder="Search tags..."
+								bind:value={tagsSearch}
+								class="h-8"
+							/>
+							{#if (page.data as PageData).filters.tags.length > 1}
+								<div class="flex gap-1">
+									<button
+										class="flex-1 text-xs py-1 px-2 rounded-sm transition-colors {(
+											page.data as PageData
+										).filters.tagsMatchMode === 'any'
+											? 'bg-primary text-primary-foreground'
+											: 'bg-muted hover:bg-muted/80'}"
+										onclick={() => setTagsMatchMode("any")}
+									>
+										Any
+									</button>
+									<button
+										class="flex-1 text-xs py-1 px-2 rounded-sm transition-colors {(
+											page.data as PageData
+										).filters.tagsMatchMode === 'all'
+											? 'bg-primary text-primary-foreground'
+											: 'bg-muted hover:bg-muted/80'}"
+										onclick={() => setTagsMatchMode("all")}
+									>
+										All
+									</button>
+								</div>
+							{/if}
+						</div>
+						<div class="max-h-[200px] overflow-y-auto p-1">
+							{#if filteredAvailableTags.length === 0}
+								<p
+									class="text-sm text-muted-foreground px-2 py-4 text-center"
+								>
+									No tags found
+								</p>
+							{:else}
+								{#each filteredAvailableTags as tag}
+									<label
+										class="flex items-center gap-2 px-2 py-1.5 text-sm rounded-sm hover:bg-accent transition-colors cursor-pointer"
+									>
+										<Checkbox
+											checked={(
+												page.data as PageData
+											).filters.tags.includes(tag.name)}
+											onCheckedChange={() =>
+												toggleTag(tag.name)}
+										/>
+										<span>{tag.name}</span>
+									</label>
+								{/each}
+							{/if}
+						</div>
+					</Popover.Content>
+				</Popover.Root>
 
-				<Button
-					variant={showPublicOnly ? "secondary" : "outline"}
-					class="gap-2"
-					onclick={() => (showPublicOnly = !showPublicOnly)}
-				>
-					<Globe class="w-4 h-4" />
-					<span class="hidden sm:inline">Public</span>
-				</Button>
-
-				{#if searchQuery || selectedLanguage || selectedTags.length > 0 || showPublicOnly}
+				{#if (page.data as PageData).filters.search || (page.data as PageData).filters.language || (page.data as PageData).filters.tags.length > 0}
 					<Button variant="ghost" size="icon" onclick={clearFilters}>
 						<X class="w-4 h-4" />
 					</Button>
@@ -578,9 +467,16 @@
 			</div>
 		</div>
 
-		{#if selectedTags.length > 0}
-			<div class="flex flex-wrap gap-1.5">
-				{#each selectedTags as tag}
+		{#if (page.data as PageData).filters.tags.length > 0}
+			<div class="flex flex-wrap gap-1.5 items-center">
+				{#if (page.data as PageData).filters.tags.length > 1}
+					<span class="text-xs text-muted-foreground mr-1">
+						{(page.data as PageData).filters.tagsMatchMode === "all"
+							? "All tags"
+							: "Any tag"}:
+					</span>
+				{/if}
+				{#each (page.data as PageData).filters.tags as tag}
 					<Badge variant="secondary" class="gap-1 pr-1.5">
 						{tag}
 						<button
@@ -598,7 +494,7 @@
 	<Separator />
 
 	<main class="flex-1 overflow-auto p-6 pt-4">
-		{#if filteredSnippets.length === 0}
+		{#if (page.data as PageData).snippets.length === 0}
 			<div
 				class="flex flex-col items-center justify-center h-[50vh] text-center"
 			>
@@ -609,7 +505,7 @@
 				</div>
 				<h3 class="text-lg font-semibold mb-1">No snippets found</h3>
 				<p class="text-sm text-muted-foreground max-w-sm">
-					{#if searchQuery || selectedLanguage || selectedTags.length > 0}
+					{#if (page.data as PageData).filters.search || (page.data as PageData).filters.language || (page.data as PageData).filters.tags.length > 0}
 						Try adjusting your search or filters to find what you're
 						looking for.
 					{:else}
@@ -617,7 +513,7 @@
 						collection.
 					{/if}
 				</p>
-				{#if !searchQuery && !selectedLanguage && selectedTags.length === 0}
+				{#if !(page.data as PageData).filters.search && !(page.data as PageData).filters.language && (page.data as PageData).filters.tags.length === 0}
 					<Button
 						class="mt-4"
 						onclick={() => (createDialogOpen = true)}
@@ -631,7 +527,7 @@
 			<div
 				class="grid gap-4 sm:grid-cols-1 lg:grid-cols-2 xl:grid-cols-3"
 			>
-				{#each filteredSnippets as snippet (snippet.id)}
+				{#each (page.data as PageData).snippets as snippet (snippet.id)}
 					<Card.Root
 						class="group relative flex flex-col overflow-hidden transition-all hover:shadow-md"
 					>
@@ -733,11 +629,11 @@
 								<div class="flex items-center gap-3">
 									<span class="flex items-center gap-1">
 										<Calendar class="w-3 h-3" />
-										{formatDate(snippet.created_at)}
+										{formatDate(snippet.createdAt)}
 									</span>
 									<span class="flex items-center gap-1">
 										<Clock class="w-3 h-3" />
-										{formatRelativeTime(snippet.updated_at)}
+										{formatRelativeTime(snippet.updatedAt)}
 									</span>
 								</div>
 								{#if snippet.isPublic}
@@ -757,6 +653,62 @@
 						</Card.Footer>
 					</Card.Root>
 				{/each}
+			</div>
+
+			<div
+				class="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6 pt-4 border-t"
+			>
+				<div
+					class="flex items-center gap-2 text-sm text-muted-foreground"
+				>
+					<span
+						>Total: {(page.data as PageData).totalCount} snippets</span
+					>
+				</div>
+
+				<div class="flex items-center gap-1">
+					<span class="text-sm text-muted-foreground mr-2">
+						Page {(page.data as PageData).page} of {totalPages}
+					</span>
+					<Button
+						variant="outline"
+						size="icon"
+						class="h-8 w-8"
+						disabled={(page.data as PageData).page <= 1}
+						onclick={() => goToPage(1)}
+					>
+						<ChevronsLeft class="w-4 h-4" />
+					</Button>
+					<Button
+						variant="outline"
+						size="icon"
+						class="h-8 w-8"
+						disabled={(page.data as PageData).page <= 1}
+						onclick={() =>
+							goToPage((page.data as PageData).page - 1)}
+					>
+						<ChevronLeft class="w-4 h-4" />
+					</Button>
+					<Button
+						variant="outline"
+						size="icon"
+						class="h-8 w-8"
+						disabled={(page.data as PageData).page >= totalPages}
+						onclick={() =>
+							goToPage((page.data as PageData).page + 1)}
+					>
+						<ChevronRight class="w-4 h-4" />
+					</Button>
+					<Button
+						variant="outline"
+						size="icon"
+						class="h-8 w-8"
+						disabled={(page.data as PageData).page >= totalPages}
+						onclick={() => goToPage(totalPages)}
+					>
+						<ChevronsRight class="w-4 h-4" />
+					</Button>
+				</div>
 			</div>
 		{/if}
 	</main>
