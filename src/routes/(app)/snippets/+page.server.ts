@@ -1,6 +1,8 @@
-import { redirect } from "@sveltejs/kit"
+import { fail, redirect } from "@sveltejs/kit"
+import { eq } from "drizzle-orm"
 import { db } from "$lib/server/db"
-import type { PageServerLoad } from "./$types"
+import { languages, snippets, snippetTags, tags } from "$lib/server/db/schema"
+import type { Actions, PageServerLoad } from "./$types"
 
 export const load: PageServerLoad = async ({ cookies, url }) => {
 	const id = cookies.get("user_id")
@@ -108,4 +110,85 @@ export const load: PageServerLoad = async ({ cookies, url }) => {
 			tagsMatchMode: tagsMatchModeParam as "any" | "all",
 		},
 	}
+}
+
+export const actions: Actions = {
+	create: async ({ request, cookies }) => {
+		const id = cookies.get("user_id")
+		if (!id) return fail(401, { message: "Unauthorized" })
+
+		const formData = await request.formData()
+		const title = formData.get("title")?.toString().trim()
+		const description = formData.get("description")?.toString().trim()
+		const code = formData.get("code")?.toString().trim()
+		const languageId = formData.get("language")?.toString().trim()
+		const tagsString = formData.get("tags")?.toString().trim()
+		const isPublic = formData.get("isPublic") === "on"
+
+		if (!title || !code) {
+			return fail(400, { message: "Title and code are required" })
+		}
+
+		const tagNames = tagsString
+			? tagsString
+					.split(",")
+					.map((t) => t.trim())
+					.filter(Boolean)
+			: []
+
+		const existingTags = await db.query.tags.findMany({
+			columns: { id: true, name: true },
+		})
+
+		const existingTagMap = new Map(
+			existingTags.map((t) => [t.name.toLowerCase(), t]),
+		)
+		const tagIdsToLink: number[] = []
+
+		for (const tagName of tagNames) {
+			const existingTag = existingTagMap.get(tagName.toLowerCase())
+			if (existingTag) {
+				tagIdsToLink.push(existingTag.id)
+			} else {
+				const [newTag] = await db
+					.insert(tags)
+					.values({ name: tagName })
+					.returning({ id: tags.id })
+				if (newTag) {
+					tagIdsToLink.push(newTag.id)
+				}
+			}
+		}
+
+		const now = new Date()
+		const [newSnippet] = await db
+			.insert(snippets)
+			.values({
+				authorId: id,
+				title,
+				description: description || "",
+				code,
+				languageId: languageId || null,
+				isPublic,
+				publishedAt: isPublic ? now : null,
+			})
+			.returning({ id: snippets.id })
+
+		if (!newSnippet) {
+			return fail(500, { message: "Failed to create snippet" })
+		}
+
+		if (tagIdsToLink.length > 0) {
+			await db.insert(snippetTags).values(
+				tagIdsToLink.map((tagId) => ({
+					snippetId: newSnippet.id,
+					tagId,
+					createdAt: now,
+					updatedAt: now,
+				})),
+			)
+		}
+
+		redirect(303, "/snippets")
+	},
 }
