@@ -52,6 +52,7 @@
 
 	let langOpen = $state(false);
 	let triggerRef = $state<HTMLButtonElement>(null!);
+	let tagsError = $state<string | null>(null);
 
 	function closeAndFocusTrigger() {
 		langOpen = false;
@@ -63,7 +64,39 @@
 	});
 	const { form: formData, enhance } = superform;
 
-	function handlePaste(event: ClipboardEvent | Event) {
+	const MAX_TAGS = 10;
+	const MAX_TAG_LENGTH = 30;
+	const TAG_PATTERN = /^[a-zA-Z0-9_-]+$/;
+
+	function validateTags(tagsString: string): string | null {
+		if (!tagsString.trim()) return null;
+
+		const tags = tagsString
+			.split(",")
+			.map((t) => t.trim())
+			.filter(Boolean);
+
+		if (tags.length > MAX_TAGS) {
+			return `Maximum ${MAX_TAGS} tags allowed (you have ${tags.length})`;
+		}
+
+		for (const tag of tags) {
+			if (tag.length > MAX_TAG_LENGTH) {
+				return `Tag "${tag}" exceeds ${MAX_TAG_LENGTH} character limit`;
+			}
+			if (!TAG_PATTERN.test(tag)) {
+				return `Tag "${tag}" contains invalid characters (use letters, numbers, hyphens, underscores)`;
+			}
+		}
+
+		return null;
+	}
+
+	$effect(() => {
+		tagsError = validateTags($formData.tags);
+	});
+
+	function handlePaste(event: ClipboardEvent) {
 		let pastedText: string | undefined;
 
 		if ("clipboardData" in event && event.clipboardData) {
@@ -148,8 +181,6 @@
 								placeholder="Paste your code here..."
 								class="min-h-[200px] font-mono text-sm"
 								onpaste={handlePaste}
-								onchange={handlePaste}
-								onblur={handlePaste}
 							/>
 						{/snippet}
 					</Form.Control>
@@ -238,6 +269,11 @@
 								placeholder="utils, hooks, api"
 								bind:value={$formData.tags}
 							/>
+							{#if tagsError}
+								<p class="text-xs text-destructive mt-1">
+									{tagsError}
+								</p>
+							{/if}
 						{/snippet}
 					</Form.Control>
 					<Form.FieldErrors />
@@ -274,7 +310,9 @@
 					</Form.Button>
 					<Form.Button
 						type="submit"
-						disabled={!$formData.title || !$formData.code}
+						disabled={!$formData.title ||
+							!$formData.code ||
+							tagsError !== null}
 					>
 						Create Snippet
 					</Form.Button>
