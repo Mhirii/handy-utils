@@ -8,7 +8,7 @@ import { newSnippetSchema } from "./schema"
 
 export const load: PageServerLoad = async ({ cookies, url }) => {
 	const id = cookies.get("user_id")
-	if (!id) return redirect(307, "/snippets/public")
+	// if (!id) return redirect(307, "/snippets/public")
 
 	const pageParam = url.searchParams.get("page") || "1"
 	const sizeParam = url.searchParams.get("pageSize") || "12"
@@ -30,7 +30,7 @@ export const load: PageServerLoad = async ({ cookies, url }) => {
 		: null
 
 	const snippetsResult = await db.query.snippets.findMany({
-		where: { authorId: id },
+		where: id ? { authorId: id } : { isPublic: true },
 		with: {
 			tags: true,
 			language: true,
@@ -100,6 +100,7 @@ export const load: PageServerLoad = async ({ cookies, url }) => {
 	}))
 
 	return {
+		userId: id ? id : null,
 		form: await superValidate(zod4(newSnippetSchema)),
 		snippets: formattedSnippets,
 		languages: languagesResult,

@@ -26,7 +26,6 @@ export const load: LayoutServerLoad = async ({ cookies }) => {
 			url: "/snippets",
 			icon: "FileCodeCorner",
 			needAuth: true,
-			disabled: !auth,
 		},
 		{
 			title: "Documentation",

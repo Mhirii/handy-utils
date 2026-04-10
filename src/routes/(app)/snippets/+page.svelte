@@ -19,6 +19,7 @@
 		ChevronRight,
 		ChevronsLeft,
 		ChevronsRight,
+		LogInIcon,
 	} from "@lucide/svelte";
 	import SnippetCard from "$lib/components/snippet-card.svelte";
 	import CreateSnippetDialog from "$lib/components/create-snippet-dialog.svelte";
@@ -45,6 +46,7 @@
 	}
 
 	interface PageData {
+		userId: string | null;
 		form: SuperValidated<Infer<NewSnippetSchema>>;
 		snippets: Snippet[];
 		languages: { id: string; extension: string; color: string }[];
@@ -148,10 +150,17 @@
 					</p>
 				</div>
 			</div>
-			<Button onclick={() => (createDialogOpen = true)}>
-				<Plus class="w-4 h-4" />
-				New Snippet
-			</Button>
+			{#if data.userId}
+				<Button onclick={() => (createDialogOpen = true)}>
+					<Plus class="w-4 h-4" />
+					New Snippet
+				</Button>
+			{:else}
+				<Button disabled>
+					<Plus class="w-4 h-4" />
+					New Snippet
+				</Button>
+			{/if}
 		</div>
 
 		<div class="flex flex-col gap-3 sm:flex-row">
@@ -337,19 +346,32 @@
 					{#if data.filters.search || data.filters.language || data.filters.tags.length > 0}
 						Try adjusting your search or filters to find what you're
 						looking for.
-					{:else}
+					{:else if data.userId}
 						Create your first snippet to get started building your
 						collection.
+					{:else}
+						There seems to be no publicly published snippets yet.
+						You can login to create your first snippet.
 					{/if}
 				</p>
 				{#if !data.filters.search && !data.filters.language && data.filters.tags.length === 0}
-					<Button
-						class="mt-4"
-						onclick={() => (createDialogOpen = true)}
-					>
-						<Plus class="w-4 h-4" />
-						Create Snippet
-					</Button>
+					{#if data.userId}
+						<Button
+							class="mt-4"
+							onclick={() => (createDialogOpen = true)}
+						>
+							<Plus class="w-4 h-4" />
+							Create Snippet
+						</Button>
+					{:else}
+						<Button
+							onclick={() => goto("/auth/login")}
+							class="mt-4"
+						>
+							<LogInIcon />
+							Login to Create Snippets
+						</Button>
+					{/if}
 				{/if}
 			</div>
 		{:else}
@@ -415,8 +437,10 @@
 	</main>
 </div>
 
-<CreateSnippetDialog
-	bind:open={createDialogOpen}
-	languages={data.languages}
-	form={data.form}
-/>
+{#if data.userId}
+	<CreateSnippetDialog
+		bind:open={createDialogOpen}
+		languages={data.languages}
+		form={data.form}
+	/>
+{/if}
