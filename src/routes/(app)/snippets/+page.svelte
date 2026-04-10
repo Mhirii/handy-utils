@@ -23,6 +23,14 @@
 	import SnippetCard from "$lib/components/snippet-card.svelte";
 	import CreateSnippetDialog from "$lib/components/create-snippet-dialog.svelte";
 
+	import { newSnippetSchema, type NewSnippetSchema } from "./schema";
+	import {
+		type SuperValidated,
+		type Infer,
+		superForm,
+	} from "sveltekit-superforms";
+	import { zod4Client } from "sveltekit-superforms/adapters";
+
 	interface Snippet {
 		id: number;
 		title: string;
@@ -37,6 +45,7 @@
 	}
 
 	interface PageData {
+		form: SuperValidated<Infer<NewSnippetSchema>>;
 		snippets: Snippet[];
 		languages: { id: string; extension: string; color: string }[];
 		tags: { id: number; name: string }[];
@@ -406,4 +415,8 @@
 	</main>
 </div>
 
-<CreateSnippetDialog bind:open={createDialogOpen} languages={data.languages} />
+<CreateSnippetDialog
+	bind:open={createDialogOpen}
+	languages={data.languages}
+	form={data.form}
+/>

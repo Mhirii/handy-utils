@@ -10,6 +10,20 @@
 	import { ChevronsUpDownIcon, CheckIcon } from "@lucide/svelte";
 	import { cn } from "$lib/utils";
 	import { tick } from "svelte";
+	import hljs from "highlight.js";
+	import {
+		type SuperValidated,
+		type Infer,
+		superForm,
+	} from "sveltekit-superforms";
+	import { zod4Client } from "sveltekit-superforms/adapters";
+	import {
+		newSnippetSchema,
+		type NewSnippetSchema,
+	} from "../../routes/(app)/snippets/schema";
+	import * as Form from "$lib/components/ui/form/index.js";
+	import { CONSTANTS } from "drizzle-orm";
+	import FormButton from "./ui/form/form-button.svelte";
 
 	interface Language {
 		id: string;
@@ -20,19 +34,21 @@
 	let {
 		open = $bindable(),
 		languages,
+		form,
 	}: {
 		open: boolean;
 		languages: Language[];
+		form: SuperValidated<Infer<NewSnippetSchema>>;
 	} = $props();
 
-	let newSnippet = $state({
-		title: "",
-		description: "",
-		code: "",
-		language: "",
-		tags: "",
-		isPublic: false,
-	});
+	// let newSnippet = $state({
+	// 	title: "",
+	// 	description: "",
+	// 	code: "",
+	// 	language: "",
+	// 	tags: "",
+	// 	isPublic: false,
+	// });
 
 	let langOpen = $state(false);
 	let triggerRef = $state<HTMLButtonElement>(null!);
@@ -40,6 +56,43 @@
 	function closeAndFocusTrigger() {
 		langOpen = false;
 		tick().then(() => triggerRef.focus());
+	}
+
+	const superform = superForm(form, {
+		validators: zod4Client(newSnippetSchema),
+	});
+	const { form: formData, enhance } = superform;
+
+	function handlePaste(event: ClipboardEvent | Event) {
+		let pastedText: string | undefined;
+
+		if ("clipboardData" in event && event.clipboardData) {
+			pastedText = event.clipboardData.getData("text");
+		} else if ((event as any).originalEvent?.clipboardData) {
+			// For some frameworks/browsers, clipboardData may be on originalEvent
+			pastedText = (event as any).originalEvent.clipboardData.getData(
+				"text",
+			);
+		} else {
+			return;
+		}
+
+		if (!pastedText) return;
+
+		const detected = hljs.highlightAuto(pastedText).language;
+		if (detected) {
+			const match = languages.find(
+				(l) =>
+					l.id.toLowerCase() === detected.toLowerCase() ||
+					l.extension.toLowerCase().includes(detected.toLowerCase()),
+			);
+			if (match) {
+				formData.update((d) => {
+					d.language = match.id;
+					return d;
+				});
+			}
+		}
 	}
 </script>
 
@@ -52,131 +105,181 @@
 				below.
 			</Dialog.Description>
 		</Dialog.Header>
-		<form method="POST" action="?/create">
+		<form method="POST" action="?/create" use:enhance>
 			<div class="grid gap-4 py-4">
-				<div class="grid gap-2">
-					<Label for="title">Title</Label>
-					<Input
-						id="title"
-						name="title"
-						placeholder="Debounce Function"
-						bind:value={newSnippet.title}
-					/>
-				</div>
-				<div class="grid gap-2">
-					<Label for="description">Description</Label>
-					<Textarea
-						id="description"
-						name="description"
-						placeholder="A brief description of what this snippet does..."
-						bind:value={newSnippet.description}
-						class="min-h-[80px]"
-					/>
-				</div>
-				<div class="grid gap-2">
-					<Label for="language">Language</Label>
-					<Popover.Root bind:open={langOpen}>
-						<Popover.Trigger bind:ref={triggerRef}>
-							{#snippet child({ props })}
-								<Button
-									variant="outline"
-									class="w-[200px] justify-between"
-									{...props}
-									role="combobox"
-									aria-expanded={langOpen}
-								>
-									{newSnippet.language ||
-										"Select a language..."}
-									<ChevronsUpDownIcon
-										class="ms-2 size-4 shrink-0 opacity-50"
-									/>
-								</Button>
-							{/snippet}
-						</Popover.Trigger>
-						<Popover.Content class="w-[200px] p-0">
-							<Command.Root>
-								<Command.Input
-									placeholder="Search languages..."
-								/>
-								<Command.List>
-									<Command.Empty
-										>No languages found.</Command.Empty
-									>
-									<Command.Group>
-										{#each languages as lang}
-											<Command.Item
-												value={lang.id}
-												onSelect={() => {
-													newSnippet.language =
-														lang.id;
-													closeAndFocusTrigger();
-												}}
+				<Form.Field form={superform} name="title" class="grid gap-2">
+					<Form.Control>
+						{#snippet children({ props })}
+							<Label for="title">Title</Label>
+							<Input
+								{...props}
+								bind:value={$formData.title}
+								placeholder="Debounce Function"
+							/>
+						{/snippet}
+					</Form.Control>
+					<Form.FieldErrors />
+				</Form.Field>
+				<Form.Field
+					form={superform}
+					name="description"
+					class="grid gap-2"
+				>
+					<Form.Control>
+						{#snippet children({ props })}
+							<Label for="description">Description</Label>
+							<Textarea
+								{...props}
+								bind:value={$formData.description}
+								placeholder="A brief description of what this snippet does..."
+								class="min-h-[80px]"
+							/>
+						{/snippet}
+					</Form.Control>
+					<Form.FieldErrors />
+				</Form.Field>
+				<Form.Field form={superform} name="code" class="grid gap-2">
+					<Form.Control>
+						{#snippet children({ props })}
+							<Label for="code">Code</Label>
+							<Textarea
+								{...props}
+								bind:value={$formData.code}
+								placeholder="Paste your code here..."
+								class="min-h-[200px] font-mono text-sm"
+								onpaste={handlePaste}
+								onchange={handlePaste}
+								onblur={handlePaste}
+							/>
+						{/snippet}
+					</Form.Control>
+					<Form.FieldErrors />
+				</Form.Field>
+				<Form.Field form={superform} name="language" class="grid gap-2">
+					<Form.Control>
+						{#snippet children({ props })}
+							<Label for="language">Language</Label>
+							<input
+								{...props}
+								type="hidden"
+								name="language"
+								value={$formData.language}
+							/>
+							<Popover.Root bind:open={langOpen}>
+								<Popover.Trigger bind:ref={triggerRef}>
+									{#snippet child({ props })}
+										<Button
+											variant="outline"
+											class="w-[200px] justify-between"
+											{...props}
+											role="combobox"
+											aria-expanded={langOpen}
+										>
+											{$formData.language ||
+												"Select a language..."}
+											<ChevronsUpDownIcon
+												class="ms-2 size-4 shrink-0 opacity-50"
+											/>
+										</Button>
+									{/snippet}
+								</Popover.Trigger>
+								<Popover.Content class="w-[200px] p-0">
+									<Command.Root>
+										<Command.Input
+											placeholder="Search languages..."
+										/>
+										<Command.List>
+											<Command.Empty
+												>No languages found.</Command.Empty
 											>
-												<CheckIcon
-													class={cn(
-														"me-2 size-4",
-														newSnippet.language !==
-															lang.id &&
-															"text-transparent",
-													)}
-												/>
-												{lang.id}
-											</Command.Item>
-										{/each}
-									</Command.Group>
-								</Command.List>
-							</Command.Root>
-						</Popover.Content>
-					</Popover.Root>
-				</div>
-				<div class="grid gap-2">
-					<Label for="tags">Tags (comma-separated)</Label>
-					<Input
-						id="tags"
-						name="tags"
-						placeholder="utils, hooks, api"
-						bind:value={newSnippet.tags}
-					/>
-				</div>
-				<div class="grid gap-2">
-					<Label for="code">Code</Label>
-					<Textarea
-						id="code"
-						name="code"
-						placeholder="Paste your code here..."
-						bind:value={newSnippet.code}
-						class="min-h-[200px] font-mono text-sm"
-					/>
-				</div>
-				<div class="flex items-center gap-2">
-					<Checkbox
-						id="isPublic"
-						name="isPublic"
-						bind:checked={newSnippet.isPublic}
-					/>
-					<Label
-						for="isPublic"
-						class="text-sm font-normal cursor-pointer"
+											<Command.Group>
+												{#each languages as lang}
+													<Command.Item
+														{...props}
+														onSelect={() => {
+															formData.update(
+																(d) => {
+																	d.language =
+																		lang.id;
+																	return d;
+																},
+															);
+															closeAndFocusTrigger();
+														}}
+													>
+														<CheckIcon
+															class={cn(
+																"me-2 size-4",
+																superform.capture()
+																	.data
+																	.language !==
+																	lang.id &&
+																	"text-transparent",
+															)}
+														/>
+														{lang.id}
+													</Command.Item>
+												{/each}
+											</Command.Group>
+										</Command.List>
+									</Command.Root>
+								</Popover.Content>
+							</Popover.Root>
+						{/snippet}
+					</Form.Control>
+					<Form.FieldErrors />
+				</Form.Field>
+				<Form.Field form={superform} name="tags" class="grid gap-2">
+					<Form.Control>
+						{#snippet children({ props })}
+							<Label for="tags">Tags (comma-separated)</Label>
+							<Input
+								{...props}
+								placeholder="utils, hooks, api"
+								bind:value={$formData.tags}
+							/>
+						{/snippet}
+					</Form.Control>
+					<Form.FieldErrors />
+				</Form.Field>
+				<Form.Field
+					form={superform}
+					name="isPublic"
+					class="flex items-center gap-2"
+				>
+					<Form.Control>
+						{#snippet children({ props })}
+							<Checkbox
+								{...props}
+								bind:checked={$formData.isPublic}
+							/>
+							<Label
+								for="isPublic"
+								class="text-sm font-normal cursor-pointer"
+							>
+								Make this snippet public
+							</Label>
+						{/snippet}
+					</Form.Control>
+
+					<Form.FieldErrors />
+				</Form.Field>
+				<Dialog.Footer>
+					<Form.Button
+						variant="outline"
+						type="reset"
+						onclick={() => (open = false)}
 					>
-						Make this snippet public
-					</Label>
-				</div>
+						Cancel
+					</Form.Button>
+					<Form.Button
+						type="submit"
+						disabled={!$formData.title || !$formData.code}
+					>
+						Create Snippet
+					</Form.Button>
+				</Dialog.Footer>
 			</div>
-			<Dialog.Footer>
-				<Button
-					variant="outline"
-					type="button"
-					onclick={() => (open = false)}
-				>
-					Cancel
-				</Button>
-				<Button
-					type="submit"
-					disabled={!newSnippet.title || !newSnippet.code}
-				>
-					Create Snippet
-				</Button>
-			</Dialog.Footer>
 		</form>
 	</Dialog.Content>
 </Dialog.Root>

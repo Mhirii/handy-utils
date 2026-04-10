@@ -1,7 +1,10 @@
 import { fail, redirect } from "@sveltejs/kit"
+import { superValidate } from "sveltekit-superforms"
+import { zod4 } from "sveltekit-superforms/adapters"
 import { db } from "$lib/server/db"
 import { snippets, snippetTags, tags } from "$lib/server/db/schema"
 import type { Actions, PageServerLoad } from "./$types"
+import { newSnippetSchema } from "./schema"
 
 export const load: PageServerLoad = async ({ cookies, url }) => {
 	const id = cookies.get("user_id")
@@ -97,6 +100,7 @@ export const load: PageServerLoad = async ({ cookies, url }) => {
 	}))
 
 	return {
+		form: await superValidate(zod4(newSnippetSchema)),
 		snippets: formattedSnippets,
 		languages: languagesResult,
 		tags: tagsResult,

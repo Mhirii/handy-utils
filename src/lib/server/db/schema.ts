@@ -31,7 +31,7 @@ export const snippets = pgTable("snippets", {
 
 export const tags = pgTable("tags", {
 	id: serial("id").primaryKey(),
-	name: text("name").notNull(),
+	name: text("name").notNull().unique(),
 	createdAt: timestamp("created_at").notNull().defaultNow(),
 })
 
