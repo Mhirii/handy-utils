@@ -3,6 +3,7 @@
 	import { Badge } from "$lib/components/ui/badge";
 	import * as Card from "$lib/components/ui/card";
 	import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
+	import * as Dialog from "$lib/components/ui/dialog";
 	import {
 		Calendar,
 		Clock,
@@ -34,9 +35,11 @@
 		updatedAt: string;
 	}
 
-	let { snippet }: { snippet: Snippet } = $props();
+	let { snippet, onDelete }: { snippet: Snippet; onDelete?: () => void } = $props();
 
 	let copiedId = $state<number | null>(null);
+	let showDeleteDialog = $state(false);
+	let isDeleting = $state(false);
 
 	function formatDate(dateString: string): string {
 		const date = new Date(dateString);
@@ -97,6 +100,39 @@
 			});
 	}
 
+	async function handleDelete() {
+		isDeleting = true;
+		try {
+			const formData = new FormData();
+			formData.append("snippetId", snippet.id.toString());
+
+			const response = await fetch("?/delete", {
+				method: "POST",
+				body: formData,
+			});
+
+			const result = await response.json();
+
+			if (!response.ok || result.type!=='success') {
+				console.log(response)
+				console.log((result))
+				toast.error(result.message || "Failed to delete snippet");
+				return;
+			}
+
+			toast.success("Snippet deleted successfully");
+			showDeleteDialog = false;
+
+			// Call the optional callback to notify parent component
+			onDelete?.();
+		} catch (error) {
+			toast.error("Failed to delete snippet");
+			console.error("Delete error:", error);
+		} finally {
+			isDeleting = false;
+		}
+	}
+
 	// @ts-ignore
 	let lang = languages?.[snippet.language];
 </script>
@@ -133,6 +169,7 @@
 					<DropdownMenu.Separator />
 					<DropdownMenu.Item
 						class="text-destructive focus:text-destructive"
+						onclick={() => (showDeleteDialog = true)}
 					>
 						<Trash2 class="w-4 h-4 mr-2" />
 						Delete
@@ -223,6 +260,34 @@
 		</div>
 	</Card.Footer>
 </Card.Root>
+
+<Dialog.Root bind:open={showDeleteDialog}>
+	<Dialog.Content>
+		<Dialog.Header>
+			<Dialog.Title>Delete Snippet</Dialog.Title>
+			<Dialog.Description>
+				Are you sure you want to delete "{snippet.title}"? This action cannot
+				be undone.
+			</Dialog.Description>
+		</Dialog.Header>
+		<div class="flex justify-end gap-3">
+			<Button
+				variant="outline"
+				onclick={() => (showDeleteDialog = false)}
+				disabled={isDeleting}
+			>
+				Cancel
+			</Button>
+			<Button
+				variant="destructive"
+				onclick={handleDelete}
+				disabled={isDeleting}
+			>
+				{isDeleting ? "Deleting..." : "Delete"}
+			</Button>
+		</div>
+	</Dialog.Content>
+</Dialog.Root>
 
 <svelte:head>
 	{@html theme}

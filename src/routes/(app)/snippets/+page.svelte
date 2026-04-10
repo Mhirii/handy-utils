@@ -31,6 +31,7 @@
 	let createDialogOpen = $state(false);
 	let languageSearch = $state("");
 	let tagsSearch = $state("");
+	let loadedSnippets: any[] = $state([]);
 
 	let loading = $state(true);
 	let { data }: { data: PageData } = $props();
@@ -82,6 +83,14 @@
 	function setTags(tags: string[]) {
 		updateUrl({ tags: tags.length > 0 ? tags.join(",") : null });
 	}
+	function handleSnippetDelete(snippetId: number) {
+		loadedSnippets = loadedSnippets.filter(s => s.id !== snippetId);
+	}
+	$effect(() => {
+		data.snippets.then((snippets) => {
+			loadedSnippets = snippets;
+		});
+	});
 
 	function setTagsMatchMode(mode: "any" | "all") {
 		updateUrl({ tagsMatchMode: mode });
@@ -389,8 +398,8 @@
 				<div
 					class="grid gap-4 sm:grid-cols-1 lg:grid-cols-2 xl:grid-cols-3"
 				>
-					{#each snippets as snippet (snippet.id)}
-						<SnippetCard {snippet} />
+					{#each loadedSnippets as snippet (snippet.id)}
+						<SnippetCard {snippet} onDelete={() => handleSnippetDelete(snippet.id)} />
 					{/each}
 				</div>
 

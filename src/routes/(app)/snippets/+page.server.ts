@@ -218,4 +218,32 @@ export const actions: Actions = {
 
 		redirect(303, "/snippets")
 	},
+	delete: async ({ request, cookies }) => {
+		const id = cookies.get("user_id")
+		if (!id) return fail(401, { message: "Unauthorized" })
+
+		const formData = await request.formData()
+		const snippetId = formData.get("snippetId")?.toString()
+
+		if (!snippetId) {
+			return fail(400, { message: "Snippet ID is required" })
+		}
+
+		const snippet = await db.query.snippets.findFirst({
+			where: {id: Number.parseInt(snippetId, 10)},
+		})
+
+		if (!snippet) {
+			return fail(404, { message: "Snippet not found" })
+		}
+
+		if (snippet.authorId !== id) {
+			return fail(403, { message: "Forbidden" })
+		}
+
+		// Delete snippet (cascade will delete snippet_tags entries)
+		await db.delete(snippets).where(eq(snippets.id, snippet.id))
+
+		return { success: true }
+	},
 }
