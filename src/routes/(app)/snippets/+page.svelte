@@ -28,7 +28,7 @@
 		title: string;
 		description: string;
 		code: string;
-		language: string;
+		language?: string;
 		languageColor: string | null;
 		tags: string[];
 		isPublic: boolean;

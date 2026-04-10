@@ -40,10 +40,10 @@ export const snippetTags = pgTable(
 	{
 		snippetId: integer("snippet_id")
 			.notNull()
-			.references(() => snippets.id),
+			.references(() => snippets.id, { onDelete: "cascade" }),
 		tagId: integer("tag_id")
 			.notNull()
-			.references(() => tags.id),
+			.references(() => tags.id, { onDelete: "cascade" }),
 		createdAt: timestamp("created_at").notNull().defaultNow(),
 		updatedAt: timestamp("updated_at").notNull().defaultNow(),
 	},

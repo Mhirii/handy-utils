@@ -14,17 +14,18 @@
 		Trash2,
 		SquarePen,
 	} from "@lucide/svelte";
-	import { Highlight } from "svelte-highlight";
+	import { Highlight, HighlightAuto } from "svelte-highlight";
 
 	import theme from "svelte-highlight/styles/github-dark";
 	import * as languages from "svelte-highlight/languages";
+	import { ScrollArea } from "./ui/scroll-area";
 
 	interface Snippet {
 		id: number;
 		title: string;
 		description: string;
 		code: string;
-		language: string;
+		language?: string;
 		languageColor: string | null;
 		tags: string[];
 		isPublic: boolean;
@@ -69,7 +70,7 @@
 	}
 
 	// @ts-ignore
-	const lang = languages?.[snippet.language];
+	let lang = languages?.[snippet.language];
 </script>
 
 <Card.Root
@@ -114,12 +115,21 @@
 	</Card.Header>
 
 	<Card.Content class="flex-1 flex flex-col gap-3">
-		<div class="relative rounded-md bg-muted/50 overflow-hidden">
-			<Highlight
-				code={snippet.code}
-				language={lang}
-				class="text-xs overflow-x-auto max-h-48 leading-relaxed "
-			/>
+		<ScrollArea
+			class="relative rounded-md bg-muted/50 overflow-hidden max-h-48"
+		>
+			{#if lang}
+				<Highlight
+					code={snippet.code}
+					language={lang}
+					class="text-xs leading-relaxed "
+				/>
+			{:else}
+				<HighlightAuto
+					code={snippet.code}
+					class="text-xs leading-relaxed "
+				/>
+			{/if}
 			<div class="absolute top-2 right-2">
 				<Button
 					variant="secondary"
@@ -134,7 +144,7 @@
 					{/if}
 				</Button>
 			</div>
-		</div>
+		</ScrollArea>
 
 		<div class="flex flex-wrap gap-1.5">
 			<Badge

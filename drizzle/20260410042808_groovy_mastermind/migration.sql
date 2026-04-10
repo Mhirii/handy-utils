@@ -1,0 +1,2 @@
+ALTER TABLE "snippet_tags" DROP CONSTRAINT "snippet_tags_snippet_id_snippets_id_fkey", ADD CONSTRAINT "snippet_tags_snippet_id_snippets_id_fkey" FOREIGN KEY ("snippet_id") REFERENCES "snippets"("id") ON DELETE CASCADE;--> statement-breakpoint
+ALTER TABLE "snippet_tags" DROP CONSTRAINT "snippet_tags_tag_id_tags_id_fkey", ADD CONSTRAINT "snippet_tags_tag_id_tags_id_fkey" FOREIGN KEY ("tag_id") REFERENCES "tags"("id") ON DELETE CASCADE;
