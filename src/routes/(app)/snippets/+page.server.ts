@@ -5,7 +5,7 @@ import { zod4 } from "sveltekit-superforms/adapters"
 import { db } from "$lib/server/db"
 import { snippets, snippetTags, tags } from "$lib/server/db/schema"
 import type { Actions, PageServerLoad } from "./$types"
-import { newSnippetSchema } from "./schema"
+import { newSnippetSchema, updateSnippetSchema } from "./schema"
 
 export const load: PageServerLoad = async ({ cookies, url }) => {
 	const id = cookies.get("user_id")
@@ -230,7 +230,7 @@ export const actions: Actions = {
 		}
 
 		const snippet = await db.query.snippets.findFirst({
-			where: {id: Number.parseInt(snippetId, 10)},
+			where: { id: Number.parseInt(snippetId, 10) },
 		})
 
 		if (!snippet) {
@@ -245,5 +245,105 @@ export const actions: Actions = {
 		await db.delete(snippets).where(eq(snippets.id, snippet.id))
 
 		return { success: true }
+	},
+	update: async ({ request, cookies }) => {
+		const id = cookies.get("user_id")
+		if (!id) return fail(401, { message: "Unauthorized" })
+
+		const formData = await request.formData()
+		const snippetId = formData.get("snippetId")?.toString()
+		const title = formData.get("title")?.toString().trim()
+		const description = formData.get("description")?.toString().trim()
+		const code = formData.get("code")?.toString().trim()
+		const languageId = formData.get("language")?.toString().trim()
+		const tagsString = formData.get("tags")?.toString().trim()
+		const isPublic = formData.get("isPublic") === "on"
+
+		if (!snippetId) {
+			return fail(400, { message: "Snippet ID is required" })
+		}
+
+		if (!title || !code) {
+			return fail(400, { message: "Title and code are required" })
+		}
+
+		// Verify snippet exists and user is author
+		const snippet = await db.query.snippets.findFirst({
+			where: { id: Number.parseInt(snippetId, 10) },
+		})
+
+		if (!snippet) {
+			return fail(404, { message: "Snippet not found" })
+		}
+
+		if (snippet.authorId !== id) {
+			return fail(403, { message: "Forbidden" })
+		}
+
+		// Parse tags
+		const tagNames = tagsString
+			? tagsString
+					.split(",")
+					.map((t) => t.trim())
+					.filter(Boolean)
+			: []
+
+		// Get existing tags
+		const existingTags = await db.query.tags.findMany({
+			columns: { id: true, name: true },
+		})
+
+		const existingTagMap = new Map(
+			existingTags.map((t) => [t.name.toLowerCase(), t]),
+		)
+		const tagIdsToLink: number[] = []
+
+		// Create or link tags
+		for (const tagName of tagNames) {
+			const existingTag = existingTagMap.get(tagName.toLowerCase())
+			if (existingTag) {
+				tagIdsToLink.push(existingTag.id)
+			} else {
+				const [newTag] = await db
+					.insert(tags)
+					.values({ name: tagName })
+					.returning({ id: tags.id })
+				if (newTag) {
+					tagIdsToLink.push(newTag.id)
+				}
+			}
+		}
+
+		const now = new Date()
+
+		// Update snippet
+		await db
+			.update(snippets)
+			.set({
+				title,
+				description: description || "",
+				code,
+				languageId: languageId || null,
+				isPublic,
+				publishedAt: isPublic ? now : null,
+				updatedAt: now,
+			})
+			.where(eq(snippets.id, snippet.id))
+
+		// Delete existing tags and add new ones
+		await db.delete(snippetTags).where(eq(snippetTags.snippetId, snippet.id))
+
+		if (tagIdsToLink.length > 0) {
+			await db.insert(snippetTags).values(
+				tagIdsToLink.map((tagId) => ({
+					snippetId: snippet.id,
+					tagId,
+					createdAt: now,
+					updatedAt: now,
+				})),
+			)
+		}
+
+		return redirect(303, "/snippets")
 	},
 }

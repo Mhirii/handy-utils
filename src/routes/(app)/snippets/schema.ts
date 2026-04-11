@@ -28,3 +28,18 @@ export const newSnippetSchema = z.object({
 })
 
 export type NewSnippetSchema = typeof newSnippetSchema
+
+export const updateSnippetSchema = z.object({
+	snippetId: z.coerce.number().int().positive(),
+	title: z.string().min(1).max(50),
+	description: z.string().optional(),
+	code: z.string().min(1),
+	language: z.string().default("plaintext"),
+	tags: z.string().default("").refine(validateTags, {
+		message:
+			"Invalid tags: max 10 tags, each up to 30 characters (letters, numbers, hyphens, underscores only)",
+	}),
+	isPublic: z.boolean().default(false),
+})
+
+export type UpdateSnippetSchema = typeof updateSnippetSchema

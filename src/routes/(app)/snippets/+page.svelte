@@ -23,12 +23,15 @@
 	} from "@lucide/svelte";
 	import SnippetCard from "$lib/components/snippet-card.svelte";
 	import CreateSnippetDialog from "$lib/components/create-snippet-dialog.svelte";
+	import EditSnippetDialog from "$lib/components/edit-snippet-dialog.svelte";
 	import { type PageData } from "./$types";
 
 	import Skeleton from "$lib/components/ui/skeleton/skeleton.svelte";
 	import { Jellyfish } from "svelte-loading-spinners";
 
 	let createDialogOpen = $state(false);
+	let editDialogOpen = $state(false);
+	let editingSnippet = $state<any | null>(null);
 	let languageSearch = $state("");
 	let tagsSearch = $state("");
 	let loadedSnippets: any[] = $state([]);
@@ -86,6 +89,20 @@
 	function handleSnippetDelete(snippetId: number) {
 		loadedSnippets = loadedSnippets.filter(s => s.id !== snippetId);
 	}
+
+	function handleSnippetEdit(snippet: any) {
+		editingSnippet = snippet;
+		editDialogOpen = true;
+	}
+
+	function handleSnippetUpdate() {
+		// Refresh snippets after update
+		editDialogOpen = false;
+		data.snippets.then((snippets) => {
+			loadedSnippets = snippets;
+		});
+	}
+
 	$effect(() => {
 		data.snippets.then((snippets) => {
 			loadedSnippets = snippets;
@@ -399,7 +416,11 @@
 					class="grid gap-4 sm:grid-cols-1 lg:grid-cols-2 xl:grid-cols-3"
 				>
 					{#each loadedSnippets as snippet (snippet.id)}
-						<SnippetCard {snippet} onDelete={() => handleSnippetDelete(snippet.id)} />
+						<SnippetCard 
+							{snippet} 
+							onDelete={() => handleSnippetDelete(snippet.id)}
+							onEdit={() => handleSnippetEdit(snippet)}
+						/>
 					{/each}
 				</div>
 
@@ -471,5 +492,13 @@
 			{languages}
 			form={data.form}
 		/>
+		{#if editingSnippet}
+			<EditSnippetDialog
+				bind:open={editDialogOpen}
+				{languages}
+				snippet={editingSnippet}
+				form={data.form}
+			/>
+		{/if}
 	{/await}
 {/if}

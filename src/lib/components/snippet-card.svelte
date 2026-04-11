@@ -35,7 +35,7 @@
 		updatedAt: string;
 	}
 
-	let { snippet, onDelete }: { snippet: Snippet; onDelete?: () => void } = $props();
+	let { snippet, onDelete, onEdit }: { snippet: Snippet; onDelete?: () => void; onEdit?: () => void } = $props();
 
 	let copiedId = $state<number | null>(null);
 	let showDeleteDialog = $state(false);
@@ -162,7 +162,7 @@
 					</Button>
 				</DropdownMenu.Trigger>
 				<DropdownMenu.Content align="end">
-					<DropdownMenu.Item>
+					<DropdownMenu.Item onclick={() => onEdit?.()}>
 						<SquarePen class="w-4 h-4 mr-2" />
 						Edit
 					</DropdownMenu.Item>
