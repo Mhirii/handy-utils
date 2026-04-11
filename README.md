@@ -1,38 +1,58 @@
-# sv
+# handy-utils
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+A collection of handy developer utilities built with Svelte 5 and SvelteKit.
 
-## Creating a project
+## Features
 
-If you're seeing this, you've probably already done this step. Congrats!
+- **Cookie Analysis Tool** - Compare and analyze cookies to understand their similarities and differences
+- **Base64 Encoder/Decoder** - Encode plain text to Base64 or decode Base64 back to plain text
+- **String Utilities** - Various string manipulation tools (case conversion, formatting, etc.)
+- **Code Snippets** - Save and manage your code snippets (requires authentication)
+
+## Tech Stack
+
+- **Framework**: Svelte 5 + SvelteKit
+- **Styling**: TailwindCSS v4
+- **Database**: PostgreSQL with Drizzle ORM
+- **Authentication**: Stytch
+- **UI Components**: Custom components inspired by shadcn-ui
+
+## Getting Started
 
 ```bash
-# create a new project in the current directory
-npx sv create
+# Install dependencies
+npm install
 
-# create a new project in my-app
-npx sv create my-app
-```
-
-## Developing
-
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
-
-```bash
+# Start development server
 npm run dev
-
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
 ```
 
-## Building
+## Available Scripts
 
-To create a production version of your app:
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Start development server |
+| `npm run build` | Build for production |
+| `npm run preview` | Preview production build |
+| `npm run check` | Run TypeScript checks |
+| `npm run db:push` | Push database schema |
+| `npm run db:generate` | Generate database migrations |
+| `npm run db:studio` | Open Drizzle Studio |
+| `npm run fmt` | Format code with Biome |
 
-```bash
-npm run build
+## Project Structure
+
 ```
-
-You can preview the production build with `npm run preview`.
-
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+src/
+├── routes/
+│   ├── (app)/           # Protected routes
+│   │   ├── base64/      # Base64 encoder/decoder
+│   │   ├── cookies/     # Cookie analysis tool
+│   │   ├── snippets/    # Code snippet manager
+│   │   └── strings/     # String utilities
+│   ├── auth/            # Authentication routes
+│   └── +page.svelte    # Home page
+└── lib/
+    ├── components/      # Reusable UI components
+    └── server/         # Server-side code (db, auth)
+```
