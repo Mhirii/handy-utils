@@ -8,7 +8,7 @@
 	import * as Command from "$lib/components/ui/command/index.js";
 	import { Button } from "./ui/button";
 	import type { Component } from "svelte";
-	import { Code, Cookie } from "@lucide/svelte";
+	import { Code, Cookie, FileCodeCorner, WholeWord } from "@lucide/svelte";
 	import type { UserPromise } from "$lib/types/user";
 	import { goto } from "$app/navigation";
 
@@ -35,10 +35,20 @@
 			href: "/base64",
 			icon: Code,
 		},
+		{
+			name: "Snippets",
+			href: "/snippets",
+			icon: FileCodeCorner,
+		},
+		{
+			name: "Token Counter",
+			href: "/tokens",
+			icon: WholeWord,
+		},
 	];
 
 	function handleKeydown(e: KeyboardEvent) {
-		if (e.key === "j" && (e.metaKey || e.ctrlKey)) {
+		if ((e.key === "k" || e.key === "j") && (e.metaKey || e.ctrlKey)) {
 			e.preventDefault();
 			open = !open;
 		}

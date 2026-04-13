@@ -8,6 +8,7 @@
 		Settings2Icon,
 		FileCodeCorner,
 		type LucideIcon,
+		WholeWord,
 	} from "@lucide/svelte";
 
 	let {
@@ -22,6 +23,7 @@
 		BookOpen,
 		Settings2Icon,
 		FileCodeCorner,
+		WholeWord,
 	};
 </script>
 

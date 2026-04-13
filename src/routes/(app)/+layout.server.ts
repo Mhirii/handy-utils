@@ -28,14 +28,10 @@ export const load: LayoutServerLoad = async ({ cookies }) => {
 			needAuth: true,
 		},
 		{
-			title: "Documentation",
-			url: "#",
-			icon: "BookOpen",
-		},
-		{
-			title: "Settings",
-			url: "#",
-			icon: "Settings2Icon",
+			title: "Token Counter",
+			url: "/tokens",
+			icon: "WholeWord",
+			needAuth: false,
 		},
 	]
 
