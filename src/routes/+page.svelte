@@ -8,15 +8,29 @@
 		CardHeader,
 		CardTitle,
 	} from "$lib/components/ui/card";
-	import {
-		ChevronRightIcon,
-		CodeIcon,
-		ComponentIcon,
-		CookieIcon,
-		FileCodeCorner,
-		WholeWord,
-	} from "@lucide/svelte";
+	import tools from "$lib/tools";
+	import { cn } from "$lib/utils";
+	import { ChevronRightIcon, LockIcon } from "@lucide/svelte";
+
+	let _tools = tools;
+	if (tools.length % 3 !== 0) {
+		_tools.push({
+			title: "More Tools Coming",
+			url: "/",
+			desc: "Stay tuned for exciting new features and utilities.",
+			icon: LockIcon,
+			disabled: true,
+		});
+	}
 </script>
+
+<svelte:head>
+	<title>Handy Utils</title>
+	<meta
+		name="description"
+		content="A curated collection of lightweight, privacy-focused developer tools designed to streamline your daily workflow. Optional sign-ups, no tracking—just utilities."
+	/>
+</svelte:head>
 
 <span class="hidden">
 	<CommandMenu />
@@ -75,7 +89,67 @@
 		</header>
 
 		<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-			<Card
+			{#each tools as tool}
+				<Card
+					class={cn(
+						"group flex flex-col h-full border border-border/40  backdrop-blur-sm transition-all duration-300",
+						tool.disabled
+							? "hidden md:flex bg-muted/20 opacity-80"
+							: "bg-card/60  hover:shadow-xl hover:shadow-primary/5 hover:border-primary/30 hover:-translate-y-1",
+					)}
+				>
+					<CardHeader class="flex-1 pb-4">
+						<div
+							class={cn(
+								"w-12 h-12 rounded-xl  flex items-center justify-center mb-4 border",
+								tool.disabled
+									? "bg-muted/50 text-muted-foreground border-border/50"
+									: "bg-gradient-to-br from-primary/20 to-primary/5 text-primary border-primary/20",
+							)}
+						>
+							<svelte:component this={tool.icon} />
+						</div>
+						<CardTitle
+							class={cn(
+								"text-xl font-semibold tracking-tight",
+								tool.disabled ? "text-muted-foreground" : "",
+							)}
+						>
+							{tool.title}
+						</CardTitle>
+						<CardDescription
+							class={cn(
+								"mt-2 leading-relaxed",
+								tool.disabled ? "text-muted-foreground" : "",
+							)}>{tool.desc}</CardDescription
+						>
+					</CardHeader>
+					<CardContent class="pt-0">
+						<a
+							href={tool.url}
+							class="block w-full focus:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-md"
+						>
+							<!-- class="w-full group-hover:bg-primary group-hover:text-primary-foreground border-1 border-transparent hover:bg-sidebar-primary/20 hover:border-sidebar-primary hover:text-primary transition-all duration-200 font-medium" -->
+							<Button
+								variant={tool.disabled
+									? "outline"
+									: "secondary"}
+								class={cn(
+									"w-full ",
+									tool.disabled
+										? "font-medium cursor-not-allowed opacity-60"
+										: "group-hover:bg-primary group-hover:text-primary-foreground border-1 border-transparent",
+								)}
+								disabled={tool.disabled}
+							>
+								{tool.disabled ? "Coming Soon" : "Launch Tool"}
+								<ChevronRightIcon />
+							</Button>
+						</a>
+					</CardContent>
+				</Card>
+			{/each}
+			<!-- <Card
 				class="group flex flex-col h-full border border-border/40 bg-card/60 backdrop-blur-sm transition-all duration-300 hover:shadow-xl hover:shadow-primary/5 hover:border-primary/30 hover:-translate-y-1"
 			>
 				<CardHeader class="flex-1 pb-4">
@@ -290,7 +364,7 @@
 						Coming Soon
 					</Button>
 				</CardContent>
-			</Card>
+			</Card> -->
 		</div>
 
 		<footer class="mt-20 pt-8 border-t border-border/50 text-center">
