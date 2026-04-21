@@ -35,6 +35,11 @@
 	const { form: formData, enhance } = form;
 </script>
 
+<svelte:head>
+	<title>Sign Up</title>
+	<meta name="description" content="Create your account" />
+</svelte:head>
+
 <Card>
 	<div class="px-6 pt-2 text-center">
 		<h1 class="text-2xl font-bold">Welcome</h1>

@@ -30,6 +30,10 @@
 		name="description"
 		content="A curated collection of lightweight, privacy-focused developer tools designed to streamline your daily workflow. Optional sign-ups, no tracking—just utilities."
 	/>
+	<meta
+		name="keywords"
+		content="handy utils, handy tools, handy utilities, developer tools, base64 converter, snippet manager, token calculator, mermaid diagram, cookie comparison, privacy-focused utilities, lightweight developer tools, workflow utilities, local tools, secure utilities"
+	/>
 </svelte:head>
 
 <span class="hidden">

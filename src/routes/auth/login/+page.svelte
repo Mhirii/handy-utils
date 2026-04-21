@@ -36,6 +36,11 @@
 	const { form: formData, enhance } = form;
 </script>
 
+<svelte:head>
+	<title>Login</title>
+	<meta name="description" content="Login to your account" />
+</svelte:head>
+
 <Card>
 	<div class="px-6 pt-2 text-center">
 		<h1 class="text-2xl font-bold">Welcome back</h1>

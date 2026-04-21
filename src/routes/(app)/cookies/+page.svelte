@@ -78,6 +78,18 @@
 	}
 </script>
 
+<svelte:head>
+	<title>Cookie Comparison Tool</title>
+	<meta
+		name="description"
+		content="Compare two cookies to analyze their similarities and differences."
+	/>
+	<meta
+		name="keywords"
+		content="cookie comparison, cookie analysis, cookie comparison tool, cookie comparison tool, cookies, cookies comparison, cookies analysis, cookies comparison tool, cookies comparison tool, cookies, cookies comparison, cookies analysis, cookies comparison tool, cookies comparison tool, cookies, cookies comparison, cookies analysis, cookies comparison tool, cookies comparison tool, cookies, cookies comparison, cookies analysis, cookies comparison tool, cookies comparison tool"
+	/>
+</svelte:head>
+
 <div class="p-4 space-y-6">
 	<h1 class="text-3xl font-bold mb-6">Cookie Comparison Tool</h1>
 

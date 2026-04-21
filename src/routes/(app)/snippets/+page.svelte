@@ -87,7 +87,7 @@
 		updateUrl({ tags: tags.length > 0 ? tags.join(",") : null });
 	}
 	function handleSnippetDelete(snippetId: number) {
-		loadedSnippets = loadedSnippets.filter(s => s.id !== snippetId);
+		loadedSnippets = loadedSnippets.filter((s) => s.id !== snippetId);
 	}
 
 	function handleSnippetEdit(snippet: any) {
@@ -133,6 +133,18 @@
 
 	let searchInput = $state(data.filters.search);
 </script>
+
+<svelte:head>
+	<title>Snippet Manager</title>
+	<meta
+		name="description"
+		content="Store, manage, and quickly retrieve your saved code snippets."
+	/>
+	<meta
+		name="keywords"
+		content="snippet manager, code snippets, code snippet manager, programming snippets, developer tools, code storage, snippet organization"
+	/>
+</svelte:head>
 
 <div class="flex flex-col h-full">
 	<header class="flex flex-col gap-4 p-6 pb-4">
@@ -416,8 +428,8 @@
 					class="grid gap-4 sm:grid-cols-1 lg:grid-cols-2 xl:grid-cols-3"
 				>
 					{#each loadedSnippets as snippet (snippet.id)}
-						<SnippetCard 
-							{snippet} 
+						<SnippetCard
+							{snippet}
 							onDelete={() => handleSnippetDelete(snippet.id)}
 							onEdit={() => handleSnippetEdit(snippet)}
 						/>

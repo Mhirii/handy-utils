@@ -43,6 +43,10 @@
 		name="description"
 		content="Live preview and editor for Mermaid.js diagrams"
 	/>
+	<meta
+		name="keywords"
+		content="mermaid diagram, mermaid editor, mermaid live editor, mermaid diagram generator, mermaid diagram generator, mermaid diagram editor, mermaid diagram live editor, mermaid diagram generator, mermaid diagram generator, mermaid diagram editor, mermaid diagram live editor, mermaid, diagram, editor, live editor, generator, generator, editor, live editor, generator, generator, editor, live editor"
+	/>
 </svelte:head>
 
 <div class=" w-full flex h-full flex-col gap-4 pb-2">

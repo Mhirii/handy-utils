@@ -30,6 +30,15 @@
 	});
 </script>
 
+<svelte:head>
+	<title>Base64 Converter</title>
+	<meta
+		name="description"
+		content="Encode and decode text using base64 encoding."
+	/>
+	<meta name="keywords" content="base64, encode, decode, converter" />
+</svelte:head>
+
 <div class=" h-full">
 	<div class="flex items-center justify-between mb-6">
 		<h1 class="text-3xl font-bold">Base64 Converter</h1>

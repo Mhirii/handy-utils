@@ -126,6 +126,18 @@
 	}
 </script>
 
+<svelte:head>
+	<title>Token Calculator</title>
+	<meta
+		name="description"
+		content="Calculate token count and estimate pricing for various AI models."
+	/>
+	<meta
+		name="keywords"
+		content="token calculator, token count, token estimator, token cost, token price, AI models, LLM pricing, token pricing, ChatGPT pricing, OpenAI pricing, Azure OpenAI, Google PaLM, Claude AI, Hugging Face, Cohere, Anthropic, Replicate, Stability AI, MOSS, MPT"
+	/>
+</svelte:head>
+
 <form
 	method="POST"
 	action="?/calculate"
