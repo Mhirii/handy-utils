@@ -2,6 +2,11 @@
 	import { onMount } from "svelte";
 	import mermaid from "mermaid";
 	import { domToPng } from "modern-screenshot";
+	import ScrollArea from "./ui/scroll-area/scroll-area.svelte";
+
+	export interface MermaidPreviewActions {
+		downloadPng: () => Promise<void>;
+	}
 
 	interface Props {
 		code: string;
@@ -12,83 +17,128 @@
 	let { code, onError, onSuccess }: Props = $props();
 
 	let container: HTMLDivElement;
-	let renderId = 0;
+	let svgContent = $state<string | null>(null);
+	let errorMessage = $state<string | null>(null);
+	let isLoading = $state(false);
+	let renderCounter = 0;
 
 	onMount(() => {
 		mermaid.initialize({
 			startOnLoad: false,
 			theme: "default",
 			securityLevel: "strict",
+			fontFamily: "inherit",
+			logLevel: "error",
 		});
 	});
 
 	$effect(() => {
-		const currentCode = code;
-		const currentId = ++renderId;
-
-		if (!container || !currentCode.trim()) {
-			if (container)
-				container.innerHTML =
-					'<div class="text-muted-foreground text-sm italic">Start typing to see the preview...</div>';
+		const trimmed = code?.trim();
+		if (!trimmed) {
+			svgContent = null;
+			errorMessage = null;
+			isLoading = false;
 			return;
 		}
 
-		const timeout = setTimeout(async () => {
-			if (currentId !== renderId) return;
+		const currentId = ++renderCounter;
+		isLoading = true;
+
+		const timeoutId = setTimeout(async () => {
+			if (currentId !== renderCounter) return;
 
 			try {
-				const valid = await mermaid.parse(currentCode);
-				if (!valid) throw new Error("Invalid syntax");
+				await mermaid.parse(trimmed);
+				const id = `mermaid-${crypto.randomUUID()}`;
+				const { svg } = await mermaid.render(id, trimmed);
 
-				const id = `mermaid-${Date.now()}`;
-				const { svg } = await mermaid.render(id, currentCode);
+				if (currentId !== renderCounter) return;
 
-				if (currentId !== renderId) return;
-
-				container.innerHTML = svg;
+				svgContent = svg;
+				errorMessage = null;
 				onSuccess?.();
 			} catch (err) {
-				if (currentId !== renderId) return;
+				if (currentId !== renderCounter) return;
 				const message =
 					err instanceof Error
 						? err.message
-						: "Failed to render diagram";
-				container.innerHTML = `<div class="text-destructive text-sm">Unable to render: ${message}</div>`;
+						: "Unknown rendering error";
+				errorMessage = message;
+				svgContent = null;
 				onError?.(message);
+			} finally {
+				if (currentId === renderCounter) isLoading = false;
 			}
 		}, 150);
 
-		return () => clearTimeout(timeout);
+		return () => clearTimeout(timeoutId);
 	});
 
-	export async function downloadPng() {
-		if (!container) return;
-
+	async function downloadPng() {
+		if (!container || !svgContent) return;
 		const svgEl = container.querySelector("svg");
-		if (!svgEl) return;
+		if (!svgEl) {
+			onError?.("SVG element not found in container");
+			return;
+		}
 
-		const dataUrl = await domToPng(svgEl, {
-			scale: 2,
-			backgroundColor: "#ffffff",
-		});
-
-		const link = document.createElement("a");
-		link.download = `mermaid-diagram-${Date.now()}.png`;
-		link.href = dataUrl;
-		link.click();
+		try {
+			const dataUrl = await domToPng(svgEl, {
+				scale: 2,
+				backgroundColor: "#ffffff",
+				quality: 1.0,
+			});
+			const link = document.createElement("a");
+			link.download = `mermaid-diagram-${Date.now()}.png`;
+			link.href = dataUrl;
+			link.click();
+		} catch (err) {
+			console.error("PNG generation failed:", err);
+			onError?.("Failed to generate PNG. Check console for details.");
+		}
 	}
+
+	export { downloadPng };
 </script>
 
 <div
 	bind:this={container}
-	class="mermaid-preview flex items-center justify-center min-h-[200px]"
+	class="relative flex min-h-[200px] items-center justify-center h-full w-full"
+	role="img"
+	aria-label="Mermaid diagram preview"
 >
-	<div class="text-muted-foreground text-sm italic">Loading preview...</div>
+	<ScrollArea class="w-full overflow-auto p-2 h-full">
+		{#if isLoading}
+			<div class="flex flex-col items-center gap-2">
+				<div
+					class="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent"
+				/>
+				<span class="text-xs text-muted-foreground">Rendering...</span>
+			</div>
+		{:else if svgContent}
+			<div class="w-full overflow-auto p-2 h-full">
+				{@html svgContent}
+			</div>
+		{:else if errorMessage}
+			<div class="flex flex-col items-center gap-1 text-center p-4">
+				<span class="text-destructive font-medium"
+					>Unable to render</span
+				>
+				<span class="text-xs text-muted-foreground">{errorMessage}</span
+				>
+			</div>
+		{:else}
+			<div class="text-muted-foreground text-sm italic">
+				Start typing Mermaid syntax to see preview...
+			</div>
+		{/if}
+	</ScrollArea>
 </div>
 
 <style>
-	:global(.mermaid-preview svg) {
+	:global([role="img"] svg) {
 		max-width: 100%;
 		height: auto;
+		display: block;
 	}
 </style>
