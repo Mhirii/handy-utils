@@ -20,7 +20,7 @@
 		</p>
 	</div>
 
-	<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+	<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 		<Card
 			class="flex flex-col transition-all hover:shadow-md hover:border-primary/50"
 		>
@@ -103,6 +103,52 @@
 						class="flex items-center justify-center w-full h-full px-4 py-2"
 					>
 						Launch Tool
+					</a>
+				</Button>
+			</CardContent>
+		</Card>
+
+		<Card
+			class="flex flex-col transition-all hover:shadow-md hover:border-primary/50"
+		>
+			<CardHeader>
+				<CardTitle>Mermaid Diagram</CardTitle>
+				<CardDescription>
+					Create beautiful diagrams using the Mermaid syntax.
+				</CardDescription>
+			</CardHeader>
+			<CardContent class="mt-auto">
+				<Button variant="default" class="w-full p-0 overflow-hidden">
+					<a
+						href="/mermaid"
+						class="flex items-center justify-center w-full h-full px-4 py-2"
+					>
+						Launch Tool
+					</a>
+				</Button>
+			</CardContent>
+		</Card>
+
+		<Card
+			class="md:flex flex-col transition-all hover:shadow-md hover:border-primary/50 hidden "
+		>
+			<CardHeader>
+				<CardTitle>Some new Feature</CardTitle>
+				<CardDescription>
+					Stay tuned for exciting new features and tools coming soon.
+				</CardDescription>
+			</CardHeader>
+			<CardContent class="mt-auto">
+				<Button
+					variant="default"
+					class="w-full p-0 overflow-hidden"
+					disabled
+				>
+					<a
+						href="/json"
+						class="flex items-center justify-center w-full h-full px-4 py-2"
+					>
+						Coming Soon
 					</a>
 				</Button>
 			</CardContent>
