@@ -1,6 +1,5 @@
 <script lang="ts">
 	import MermaidPreview from "./mermaid-preview.svelte";
-	import { Textarea } from "./ui/textarea";
 
 	let code = $state(`graph TD
     A[Start] --> B{Is it working?}
@@ -9,6 +8,7 @@
     D --> B`);
 
 	let error = $state<string | null>(null);
+	let previewRef = $state<ReturnType<typeof MermaidPreview> | null>(null);
 </script>
 
 {#snippet editorPanel()}
@@ -41,7 +41,7 @@
 				</button>
 			</div>
 		</div>
-		<Textarea
+		<textarea
 			id="mermaid-input"
 			class="flex-1 w-full p-4 font-mono text-sm bg-muted rounded-lg border border-input resize-none focus:outline-none focus:ring-2 focus:ring-ring"
 			spellcheck="false"
@@ -60,15 +60,23 @@
 
 {#snippet previewPanel()}
 	<div class="flex flex-col h-full">
-		<div class="mb-2">
+		<div class="flex items-center justify-between mb-2">
 			<span class="text-sm font-medium text-muted-foreground"
 				>Preview</span
 			>
+			<button
+				class="px-3 py-1 text-xs bg-primary text-primary-foreground hover:bg-primary/90 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+				disabled={!!error || !code.trim()}
+				onclick={() => previewRef?.downloadPng()}
+			>
+				Download PNG
+			</button>
 		</div>
 		<div
 			class="flex-1 bg-muted rounded-lg border border-input p-4 overflow-auto"
 		>
 			<MermaidPreview
+				bind:this={previewRef}
 				{code}
 				onError={(e) => (error = e)}
 				onSuccess={() => (error = null)}

@@ -1,6 +1,7 @@
 <script lang="ts">
-	import { onMount, tick } from "svelte";
+	import { onMount } from "svelte";
 	import mermaid from "mermaid";
+	import { domToPng } from "modern-screenshot";
 
 	interface Props {
 		code: string;
@@ -13,7 +14,6 @@
 	let container: HTMLDivElement;
 	let renderId = 0;
 
-	// Initialize mermaid once
 	onMount(() => {
 		mermaid.initialize({
 			startOnLoad: false,
@@ -22,28 +22,24 @@
 		});
 	});
 
-	// Reactive effect to re-render when code changes
 	$effect(() => {
 		const currentCode = code;
 		const currentId = ++renderId;
 
 		if (!container || !currentCode.trim()) {
-			container &&
-				(container.innerHTML =
-					'<div class="text-muted-foreground text-sm italic">Start typing to see the preview...</div>');
+			if (container)
+				container.innerHTML =
+					'<div class="text-muted-foreground text-sm italic">Start typing to see the preview...</div>';
 			return;
 		}
 
-		// Debounce slightly for performance
 		const timeout = setTimeout(async () => {
-			if (currentId !== renderId) return; // Stale render
+			if (currentId !== renderId) return;
 
 			try {
-				// Validate syntax first
 				const valid = await mermaid.parse(currentCode);
 				if (!valid) throw new Error("Invalid syntax");
 
-				// Generate unique ID for this render
 				const id = `mermaid-${Date.now()}`;
 				const { svg } = await mermaid.render(id, currentCode);
 
@@ -64,6 +60,23 @@
 
 		return () => clearTimeout(timeout);
 	});
+
+	export async function downloadPng() {
+		if (!container) return;
+
+		const svgEl = container.querySelector("svg");
+		if (!svgEl) return;
+
+		const dataUrl = await domToPng(svgEl, {
+			scale: 2,
+			backgroundColor: "#ffffff",
+		});
+
+		const link = document.createElement("a");
+		link.download = `mermaid-diagram-${Date.now()}.png`;
+		link.href = dataUrl;
+		link.click();
+	}
 </script>
 
 <div
