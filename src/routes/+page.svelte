@@ -1,4 +1,5 @@
 <script>
+	import CommandMenu from "$lib/components/command-menu.svelte";
 	import { Button } from "$lib/components/ui/button";
 	import {
 		Card,
@@ -17,6 +18,9 @@
 	} from "@lucide/svelte";
 </script>
 
+<span class="hidden">
+	<CommandMenu />
+</span>
 <main class="min-h-screen bg-background relative overflow-hidden">
 	<div
 		class="absolute inset-0 -z-10 h-full w-full bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:24px_24px]"
@@ -64,8 +68,9 @@
 				class="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed"
 			>
 				A curated collection of lightweight, privacy-focused developer
-				tools designed to streamline your daily workflow. Optional
-				sign-ups, no tracking—just utilities.
+				tools designed to streamline your daily workflow.
+				<br />
+				Optional sign-ups, no tracking—just utilities.
 			</p>
 		</header>
 
