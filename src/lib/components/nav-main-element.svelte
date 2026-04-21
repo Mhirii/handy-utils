@@ -9,6 +9,7 @@
 		FileCodeCorner,
 		type LucideIcon,
 		WholeWord,
+		ComponentIcon,
 	} from "@lucide/svelte";
 
 	let {
@@ -24,6 +25,7 @@
 		Settings2Icon,
 		FileCodeCorner,
 		WholeWord,
+		ComponentIcon,
 	};
 </script>
 

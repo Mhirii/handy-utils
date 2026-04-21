@@ -33,6 +33,12 @@ export const load: LayoutServerLoad = async ({ cookies }) => {
 			icon: "WholeWord",
 			needAuth: false,
 		},
+		{
+			title: "Mermaid Diagram",
+			url: "/mermaid",
+			icon: "ComponentIcon",
+			needAuth: false,
+		},
 	]
 
 	if (!userID)

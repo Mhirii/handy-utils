@@ -8,7 +8,13 @@
 	import * as Command from "$lib/components/ui/command/index.js";
 	import { Button } from "./ui/button";
 	import type { Component } from "svelte";
-	import { Code, Cookie, FileCodeCorner, WholeWord } from "@lucide/svelte";
+	import {
+		Code,
+		Cookie,
+		FileCodeCorner,
+		WholeWord,
+		ComponentIcon,
+	} from "@lucide/svelte";
 	import type { UserPromise } from "$lib/types/user";
 	import { goto } from "$app/navigation";
 
@@ -44,6 +50,11 @@
 			name: "Token Counter",
 			href: "/tokens",
 			icon: WholeWord,
+		},
+		{
+			name: "Mermaid Diagram",
+			href: "/mermaid",
+			icon: ComponentIcon,
 		},
 	];
 
