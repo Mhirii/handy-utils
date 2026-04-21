@@ -2,9 +2,10 @@
 	import MermaidEditor from "$lib/components/mermaid-editor.svelte";
 	import { Button } from "$lib/components/ui/button";
 	import { Card, CardContent } from "$lib/components/ui/card";
-	import { Share2 } from "@lucide/svelte";
+	import { ComponentIcon, Share2 } from "@lucide/svelte";
 	import type { PageData } from "./$types";
 	import { toast } from "svelte-sonner";
+	import { Separator } from "$lib/components/ui/separator";
 
 	let { data }: { data: PageData } = $props();
 	let currentCode = $state(data.initialCode);
@@ -44,16 +45,30 @@
 	/>
 </svelte:head>
 
-<div class="container mx-auto flex h-screen flex-col gap-4 p-4">
-	<div class="flex items-center justify-between">
-		<h1 class="text-2xl font-bold tracking-tight">Mermaid Live Editor</h1>
-		<Button variant="outline" size="sm" onclick={shareLink}>
-			<Share2 class="mr-1 h-4 w-4" /> Share Diagram
-		</Button>
-	</div>
+<div class=" w-full flex h-full flex-col gap-4 pb-2">
+	<header
+		class="flex flex-row gap-4 p-6 pb-0 w-full justify-between items-center"
+	>
+		<div class="flex items-center gap-3 w-full">
+			<div
+				class="flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10"
+			>
+				<ComponentIcon class="w-5 h-5 text-primary" />
+			</div>
+			<h1 class="text-2xl font-bold tracking-tight">
+				Mermaid Live Editor
+			</h1>
+		</div>
+		<div class="flex items-center justify-between">
+			<Button variant="outline" size="sm" onclick={shareLink}>
+				<Share2 class="mr-1 h-4 w-4" /> Share Diagram
+			</Button>
+		</div>
+	</header>
 
+	<Separator />
 	<!-- Card provides proper border/radius/shadow without breaking flex -->
-	<Card class="flex flex-1 min-h-0 flex-col overflow-hidden">
+	<Card class="flex flex-1 min-h-0 flex-col overflow-hidden mx-4 pt-0">
 		<CardContent class="flex-1 p-4 min-h-0">
 			<MermaidEditor
 				initialCode={data.initialCode}

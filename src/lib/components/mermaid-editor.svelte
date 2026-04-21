@@ -59,7 +59,7 @@
 	<!-- Editor Panel -->
 	<div class="flex flex-1 flex-col gap-3 min-h-0">
 		<div class="flex items-center justify-between">
-			<Label for="mermaid-input" class="text-sm font-medium">
+			<Label for="mermaid-input" class="text-sm font-medium ">
 				Mermaid Syntax
 			</Label>
 			<div class="flex gap-2">
@@ -110,9 +110,7 @@
 	<!-- Preview Panel -->
 	<div class="flex flex-1 flex-col gap-3 min-h-0">
 		<div class="flex items-center justify-between">
-			<span class="text-sm font-medium text-muted-foreground"
-				>Preview</span
-			>
+			<Label class="text-sm font-medium ">Preview</Label>
 			<Button
 				variant="default"
 				size="sm"
